@@ -123,8 +123,15 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
             return ZLTextStickerView(state: state)
         } else if let state = state as? ZLImageStickerState {
             return ZLImageStickerView(state: state)
+        } else if let state = state as? ZLLineState { // Check this case
+            return ZLLineView(state: state)          // Check return type
+        } else if let state = state as? ZLArrowState { // Check this case
+            return ZLArrowView(state: state)         // Check return type
+        } else if let state = state as? ZLShapeState { // Check this case
+            return ZLShapeView(state: state)         // Check return type
         } else {
-            return nil
+            zl_debugPrint("⚠️ Unknown sticker state type encountered in initWithState: \(type(of: state))")
+            return nil // Returning nil is safer than crashing if state is unknown
         }
     }
     

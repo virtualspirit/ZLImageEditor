@@ -400,9 +400,11 @@ open class ZLEditImageViewController: UIViewController {
         deviceIsiPhone() ? .portrait : .all
     }
     
+    var previewLayer: CAShapeLayer? // For temporary drawing preview
+    var creationStartPoint: CGPoint?
+    
     deinit {
         cleanToolViewStateTimer()
-        zl_debugPrint("ZLEditImageViewController deinit")
     }
     
     @objc public class func showEditImageVC(
@@ -532,7 +534,6 @@ open class ZLEditImageViewController: UIViewController {
         }
         
         shouldLayout = false
-        zl_debugPrint("edit image layout subviews")
         var insets = UIEdgeInsets.zero
         if #available(iOS 11.0, *) {
             insets = self.view.safeAreaInsets
@@ -903,6 +904,7 @@ open class ZLEditImageViewController: UIViewController {
             selectedTool = nil
         }
         
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: !isSelected)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -961,6 +963,7 @@ open class ZLEditImageViewController: UIViewController {
         }
         
         selectedTool = nil
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -986,6 +989,7 @@ open class ZLEditImageViewController: UIViewController {
         imageStickerContainerIsHidden = false
         
         selectedTool = nil
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -1003,6 +1007,7 @@ open class ZLEditImageViewController: UIViewController {
         }
         
         selectedTool = nil
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -1017,6 +1022,7 @@ open class ZLEditImageViewController: UIViewController {
         }
         
         generateNewMosaicLayerIfAdjust()
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -1030,6 +1036,7 @@ open class ZLEditImageViewController: UIViewController {
             selectedTool = nil
         }
         
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: !isSelected)
         setAdjustViews(hidden: true)
@@ -1044,6 +1051,7 @@ open class ZLEditImageViewController: UIViewController {
         }
         
         generateAdjustImageRef()
+        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: !isSelected)
@@ -1053,6 +1061,16 @@ open class ZLEditImageViewController: UIViewController {
         eraserBtn.isHidden = hidden
         eraserBtnBgBlurView.isHidden = hidden || !eraserBtn.isSelected
         eraserLineView.isHidden = hidden
+        drawColorCollectionView?.frame = CGRect(x: eraserLineView.zl.right + 11, y: 30, width: view.zl.width - eraserLineView.zl.right - 31, height: drawColViewH)
+        drawColorCollectionView?.isHidden = hidden
+    }
+    
+    private func setLineShapeArrowViews(hidden: Bool) {
+        eraserBtn.isHidden = true
+        eraserBtnBgBlurView.isHidden = true
+        eraserLineView.isHidden = true
+ 
+        drawColorCollectionView?.frame = CGRect(x: 0, y: 30, width: containerView.frame.width, height: drawColViewH)
         drawColorCollectionView?.isHidden = hidden
     }
     
@@ -1158,6 +1176,142 @@ open class ZLEditImageViewController: UIViewController {
         }
     }
     
+    @objc func handleLineShapeArrowAction(_ pan: UIPanGestureRecognizer) {
+        let point = pan.location(in: stickersContainer) // Use stickersContainer coordinates
+        
+        let arrowHeadSize = ZLImageEditorConfiguration.default().defaultArrowHeadSize
+        let arrowHeadAngleConfig = ZLImageEditorConfiguration.default().defaultArrowHeadAngleConfig
+
+        
+        if pan.state == .began {
+            guard selectedTool != nil else { return } // Should not happen if delegate logic is correct
+
+            creationStartPoint = point
+            mainScrollView.isScrollEnabled = false
+            setToolView(show: false)
+
+            // Setup preview layer
+            previewLayer?.removeFromSuperlayer() // Clear old preview
+            previewLayer = CAShapeLayer()
+            previewLayer?.lineWidth = ZLImageEditorConfiguration.default().defaultLineWidth // Or get from config/slider
+            previewLayer?.strokeColor = currentDrawColor.cgColor // Or get from config/color picker
+            previewLayer?.fillColor = nil // Or get fill if shape tool
+            previewLayer?.lineCap = .round
+            stickersContainer.layer.addSublayer(previewLayer!)
+
+        } else if pan.state == .changed {
+            guard let start = creationStartPoint, let previewLayer = previewLayer else { return }
+
+            // Update preview drawing based on selectedTool
+            let path = UIBezierPath()
+            if selectedTool == .line || selectedTool == .arrow {
+                path.move(to: start)
+                path.addLine(to: point)
+                // Add arrow head to path if selectedTool == .arrow (simplified)
+                if selectedTool == .arrow {
+                    // Calculate the angle of the line
+                    let angle = atan2(point.y - start.y, point.x - start.x)
+                    
+                    // Calculate points for the arrow head
+                    let headAngle1 = angle + arrowHeadAngleConfig
+                    let headAngle2 = angle - arrowHeadAngleConfig
+                    
+                    let headPoint1 = CGPoint(
+                        x: point.x + arrowHeadSize * cos(headAngle1),
+                        y: point.y + arrowHeadSize * sin(headAngle1)
+                    )
+                    let headPoint2 = CGPoint(
+                        x: point.x + arrowHeadSize * cos(headAngle2),
+                        y: point.y + arrowHeadSize * sin(headAngle2)
+                    )
+                    
+                    // Draw the arrow head
+                    path.move(to: point)
+                    path.addLine(to: headPoint1)
+                    path.move(to: point)
+                    path.addLine(to: headPoint2)
+                }
+            } else if selectedTool == .square {
+                let rect = CGRect(origin: CGPoint(x: min(start.x, point.x), y: min(start.y, point.y)),
+                                  size: CGSize(width: abs(start.x - point.x), height: abs(start.y - point.y)))
+                path.append(UIBezierPath(roundedRect: rect, cornerRadius: 5.0))
+            } else if selectedTool == .circle {
+                let rect = CGRect(origin: CGPoint(x: min(start.x, point.x), y: min(start.y, point.y)),
+                                  size: CGSize(width: abs(start.x - point.x), height: abs(start.y - point.y)))
+                
+                path.append(UIBezierPath(ovalIn: rect))
+            }
+            previewLayer.path = path.cgPath
+
+        } else if pan.state == .ended || pan.state == .cancelled {
+            previewLayer?.removeFromSuperlayer()
+            previewLayer = nil
+            mainScrollView.isScrollEnabled = true
+            setToolView(show: true, delay: 0.5)
+
+            guard let start = creationStartPoint, start != point, let tool = selectedTool else {
+                 creationStartPoint = nil
+                 return // Ignore taps or zero-length drags
+            }
+
+            // --- Finalize and Create Sticker ---
+//            let currentScale = mainScrollView.zoomScale
+            let originScale = 1.0
+            let originAngle = -currentClipStatus.angle // Sticker angle is inverse of image rotation
+
+            // 1. Calculate final bounds (originFrame) in stickersContainer coords
+            let finalRect = CGRect(origin: CGPoint(x: min(start.x, point.x), y: min(start.y, point.y)),
+                                   size: CGSize(width: abs(start.x - point.x), height: abs(start.y - point.y)))
+            // For lines/arrows, the frame needs padding if line width is significant, or adjust relative points
+            let padding: CGFloat = 10 // Add padding to ensure line ends aren't clipped
+            let originFrame = finalRect.insetBy(dx: -padding, dy: -padding)
+
+            // 2. Get current tool settings (color, width, shape type etc.)
+            let currentLineColor = currentDrawColor // Replace with actual selection
+            let currentLineWidth = ZLImageEditorConfiguration.default().defaultLineWidth // Replace with actual selection
+
+            // 3. Create State object (Calculate points relative to originFrame)
+            let relativeStart = CGPoint(x: start.x - originFrame.minX, y: start.y - originFrame.minY)
+            let relativeEnd = CGPoint(x: point.x - originFrame.minX, y: point.y - originFrame.minY)
+            let relativeBounds = CGRect(x: padding, y: padding, width: finalRect.width, height: finalRect.height) // Bounds within the padded frame
+
+            var newState: ZLBaseStickertState?
+            var newView: ZLBaseStickerView?
+
+            switch tool {
+            case .line:
+                let state = ZLLineState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                newState = state
+                newView = ZLLineView(state: state)
+            case .arrow:
+                 let state = ZLArrowState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, headSize: arrowHeadSize, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                 newState = state
+                 newView = ZLArrowView(state: state)
+            case .square:
+                let state = ZLShapeState(shapeType: .rectangle, bounds: relativeBounds, strokeColor: currentLineColor, fillColor: nil, lineWidth: currentLineWidth, cornerRadius: 5, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                 newState = state
+                 newView = ZLShapeView(state: state)
+            case .circle:
+                let state = ZLShapeState(shapeType: .ellipse, bounds: relativeBounds, strokeColor: currentLineColor, fillColor: nil, lineWidth: currentLineWidth, cornerRadius: 0, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                 newState = state
+                 newView = ZLShapeView(state: state)
+            default:
+                break // Should not happen
+            }
+
+            // 4. Add View & Store Action
+            if let view = newView, let state = newState {
+                stickersContainer.addSubview(view)
+                view.frame = originFrame
+                configSticker(view)
+                view.startTimer() // Show border briefly
+                editorManager.storeAction(.sticker(oldState: nil, newState: state))
+            }
+
+            creationStartPoint = nil
+        }
+    }
+    
     @objc func drawAction(_ pan: UIPanGestureRecognizer) {
         // 橡皮擦
         if selectedTool == .draw, eraserBtn.isSelected {
@@ -1239,6 +1393,8 @@ open class ZLEditImageViewController: UIViewController {
                 }
                 generateNewMosaicImage()
             }
+        } else {
+            handleLineShapeArrowAction(pan)
         }
     }
     
@@ -1742,9 +1898,15 @@ extension ZLEditImageViewController: UIGestureRecognizerDelegate {
             guard let st = selectedTool else {
                 return false
             }
-            return (st == .draw || st == .mosaic) && !isScrolling
+            return (st == .draw || st == .mosaic || selectedTool == .line || selectedTool == .arrow || selectedTool == .square || selectedTool == .circle) && !isScrolling
         }
         
+
+        // Ensure default panGes for draw/mosaic doesn't fire when shape tools active
+        if gestureRecognizer == panGes {
+            return (selectedTool == .draw || selectedTool == .mosaic || selectedTool == .line || selectedTool == .arrow || selectedTool == .square || selectedTool == .circle) && !isScrolling
+        }
+                
         return true
     }
 }
@@ -1884,6 +2046,14 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
                 filterBtnClick()
             case .adjust:
                 adjustBtnClick()
+            case .line:
+                lineBtnClick()
+            case .arrow:
+                arrowBtnClick()
+            case .square:
+                squareBtnClick()
+            case .circle:
+                circleBtnClick()
             }
         } else if collectionView == drawColorCollectionView {
             currentDrawColor = drawColors[indexPath.row]
@@ -1901,10 +2071,81 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
         collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         collectionView.reloadData()
     }
+    
+    func squareBtnClick() {
+        let isSelected = selectedTool != .square
+        if isSelected {
+            selectedTool = .square
+            // Show relevant sub-toolbars (e.g., color, width)
+            // Hide other sub-toolbars
+        } else {
+            selectedTool = nil
+            // Hide relevant sub-toolbars
+        }
+        
+        setDrawViews(hidden: false)
+        setLineShapeArrowViews(hidden: !isSelected)
+        setFilterViews(hidden: true)
+        setAdjustViews(hidden: true)
+    }
+    
+    func circleBtnClick() {
+        let isSelected = selectedTool != .circle
+        if isSelected {
+            selectedTool = .circle
+            // Show relevant sub-toolbars (e.g., color, width)
+            // Hide other sub-toolbars
+        } else {
+            selectedTool = nil
+            // Hide relevant sub-toolbars
+        }
+        
+        setDrawViews(hidden: false)
+        setLineShapeArrowViews(hidden: !isSelected)
+        setFilterViews(hidden: true)
+        setAdjustViews(hidden: true)
+    }
+    
+    
+    func arrowBtnClick() {
+        let isSelected = selectedTool != .arrow
+        if isSelected {
+            selectedTool = .arrow
+            // Show relevant sub-toolbars (e.g., color, width)
+            // Hide other sub-toolbars
+        } else {
+            selectedTool = nil
+            // Hide relevant sub-toolbars
+        }
+        
+        setDrawViews(hidden: false)
+        setLineShapeArrowViews(hidden: !isSelected)
+        setFilterViews(hidden: true)
+        setAdjustViews(hidden: true)
+    }
+    
+    
+    func lineBtnClick() { // Create similar for arrowBtnClick, shapeBtnClick
+        let isSelected = selectedTool != .line
+        if isSelected {
+            selectedTool = .line
+            // Show relevant sub-toolbars (e.g., color, width)
+            // Hide other sub-toolbars
+        } else {
+            selectedTool = nil
+            // Hide relevant sub-toolbars
+        }
+        
+        setDrawViews(hidden: false)
+        setLineShapeArrowViews(hidden: !isSelected)
+        setFilterViews(hidden: true)
+        setAdjustViews(hidden: true)
+    }
 }
 
 extension ZLEditImageViewController: ZLStickerViewDelegate {
     func stickerBeginOperation(_ sticker: ZLBaseStickerView) {
+        
         stickersContainer.bringSubviewToFront(sticker)
         preStickerState = sticker.state
         
@@ -1952,6 +2193,7 @@ extension ZLEditImageViewController: ZLStickerViewDelegate {
     }
     
     func stickerEndOperation(_ sticker: ZLBaseStickerView, panGes: UIPanGestureRecognizer) {
+
         setToolView(show: true)
         ashbinView.layer.removeAllAnimations()
         ashbinView.isHidden = true

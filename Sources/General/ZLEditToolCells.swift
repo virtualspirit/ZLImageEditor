@@ -33,6 +33,18 @@ class ZLEditToolCell: UICollectionViewCell {
             case .draw:
                 icon.image = .zl.getImage("zl_drawLine")
                 icon.highlightedImage = .zl.getImage("zl_drawLine_selected")
+            case .line:
+                icon.image = .zl.getImage("zl_line")
+                icon.highlightedImage = .zl.getImage("zl_line_selected")
+            case .arrow:
+                icon.image = .zl.getImage("zl_arrow")
+                icon.highlightedImage = .zl.getImage("zl_arrow_selected")
+            case .square:
+                icon.image = .zl.getImage("zl_square")
+                icon.highlightedImage = .zl.getImage("zl_square_selected")
+            case .circle:
+                icon.image = .zl.getImage("zl_circle")
+                icon.highlightedImage = .zl.getImage("zl_circle_selected")
             case .clip:
                 icon.image = .zl.getImage("zl_clip")
                 icon.highlightedImage = .zl.getImage("zl_clip")
