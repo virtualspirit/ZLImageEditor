@@ -42,7 +42,7 @@ public class ZLImageEditorConfiguration: NSObject {
         .zl.rgba(99, 103, 240),
         .zl.rgba(127, 127, 127)
     ]
-    
+        
     @objc public class func `default`() -> ZLImageEditorConfiguration {
         return ZLImageEditorConfiguration.single
     }
@@ -222,6 +222,7 @@ public extension ZLImageEditorConfiguration {
         case arrow
         case square
         case circle
+        case shape
     }
 
      @objc enum ShapeType: Int {

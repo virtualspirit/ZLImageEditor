@@ -213,9 +213,9 @@ class ZLInputTextViewController: UIViewController {
         
         textStyleBtn.frame = CGRect(
             x: 12,
-            y: 0,
-            width: 50,
-            height: Self.toolViewHeight
+            y: 20,
+            width: 30,
+            height: 30
         )
         collectionView.frame = CGRect(
             x: textStyleBtn.zl.right + 5,

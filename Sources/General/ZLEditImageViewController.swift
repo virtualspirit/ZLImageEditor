@@ -229,13 +229,14 @@ open class ZLEditImageViewController: UIViewController {
     
     open var adjustCollectionView: UICollectionView?
     
+    open var drawShapeCollectionView: UICollectionView?
+    
     open lazy var eraserBtn: ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type: .custom)
         btn.setImage(.zl.getImage("zl_eraser"), for: .normal)
+        btn.setImage(.zl.getImage("zl_eraser_selected"), for: .selected)
         btn.addTarget(self, action: #selector(eraserBtnClick), for: .touchUpInside)
         btn.isHidden = true
-        btn.layer.cornerRadius = 18
-        btn.layer.masksToBounds = true
         return btn
     }()
     
@@ -281,7 +282,7 @@ open class ZLEditImageViewController: UIViewController {
     // The frame after first layout, used in dismiss animation.
     var originalFrame: CGRect = .zero
     
-    let tools: [ZLImageEditorConfiguration.EditTool]
+    var tools: [ZLImageEditorConfiguration.EditTool]
     
     let adjustTools: [ZLImageEditorConfiguration.AdjustTool]
     
@@ -316,7 +317,11 @@ open class ZLEditImageViewController: UIViewController {
     
     let drawColors: [UIColor]
     
+    var shapeOptions: [DrawShapeType]
+    
     var currentDrawColor = ZLImageEditorConfiguration.default().defaultDrawColor
+    
+    var currentDrawShape: DrawShapeType? = nil
     
     var drawPaths: [ZLDrawPath]
     
@@ -415,7 +420,9 @@ open class ZLEditImageViewController: UIViewController {
         completion: ((UIImage, ZLEditImageModel?) -> Void)?,
         cancelBlock: (() -> Void)? = nil
     ) {
-        let tools = ZLImageEditorConfiguration.default().tools
+        var tools = ZLImageEditorConfiguration.default().tools.filter { tool in
+            tool != .draw && tool != .arrow && tool != .circle && tool != .line && tool != .square
+        }
         if ZLImageEditorConfiguration.default().showClipDirectlyIfOnlyHasClipTool, tools.count == 1, tools.contains(.clip) {
             let vc = ZLClipImageViewController(
                 image: image,
@@ -469,8 +476,9 @@ open class ZLEditImageViewController: UIViewController {
         mosaicPaths = editModel?.mosaicPaths ?? []
         currentAdjustStatus = editModel?.adjustStatus ?? ZLAdjustStatus()
         preAdjustStatus = currentAdjustStatus
-        
-        var ts = ZLImageEditorConfiguration.default().tools
+        var ts = ZLImageEditorConfiguration.default().tools.filter { tool in
+            tool != .draw && tool != .arrow && tool != .circle && tool != .line && tool != .square
+        }
         if ts.contains(.imageSticker), ZLImageEditorConfiguration.default().imageStickerContainerView == nil {
             ts.removeAll { $0 == .imageSticker }
         }
@@ -478,8 +486,39 @@ open class ZLEditImageViewController: UIViewController {
         adjustTools = ZLImageEditorConfiguration.default().adjustTools
         selectedAdjustTool = adjustTools.first
         editorManager = ZLEditorManager(actions: editModel?.actions ?? [])
+        shapeOptions = [.freehand, .arrow, .ellipse, .rectangle, .line]
         
         super.init(nibName: nil, bundle: nil)
+        
+        var toolsShape = ZLImageEditorConfiguration.default().tools.filter { tool in
+            tool == .draw || tool == .arrow || tool == .circle || tool == .line || tool == .square
+        }
+        
+        if (toolsShape.count > 0) {
+            shapeOptions = []
+            tools.insert(.shape, at: 0)
+            toolsShape.forEach { t in
+                switch t {
+                case .draw:
+                    shapeOptions.append(.freehand)
+                case .arrow:
+                    shapeOptions.append(.arrow)
+                case .circle:
+                    shapeOptions.append(.ellipse)
+                case .square:
+                    shapeOptions.append(.rectangle)
+                case .line:
+                    shapeOptions.append(.line)
+                default:
+                    break
+                }
+            }
+        }
+        
+        if (shapeOptions.count > 0) {
+            currentDrawShape = shapeOptions[0]
+        }
+
         
         editorManager.delegate = self
         
@@ -706,7 +745,7 @@ open class ZLEditImageViewController: UIViewController {
         bottomShadowView.addSubview(editToolCollectionView)
         bottomShadowView.addSubview(doneBtn)
         
-        if tools.contains(.draw) {
+        if tools.contains(.shape) {
             bottomShadowView.addSubview(eraserBtnBgBlurView)
             bottomShadowView.addSubview(eraserBtn)
             bottomShadowView.addSubview(eraserLineView)
@@ -728,10 +767,27 @@ open class ZLEditImageViewController: UIViewController {
             drawCV.delegate = self
             drawCV.dataSource = self
             drawCV.isHidden = true
-            bottomShadowView.addSubview(drawCV)
             
+            bottomShadowView.addSubview(drawCV)
             ZLDrawColorCell.zl.register(drawCV)
             drawColorCollectionView = drawCV
+        
+            
+            let shapeLayout = UICollectionViewFlowLayout()
+            shapeLayout.scrollDirection = .horizontal
+            shapeLayout.itemSize = CGSize(width: 40, height: 40) // Adjust size
+            shapeLayout.minimumInteritemSpacing = 10
+            shapeLayout.sectionInset = UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10)
+            let shapeCV = UICollectionView(frame: .zero, collectionViewLayout: shapeLayout)
+            shapeCV.backgroundColor = .clear
+            shapeCV.showsHorizontalScrollIndicator = false
+            shapeCV.delegate = self
+            shapeCV.dataSource = self
+            shapeCV.isHidden = true // Initially hidden
+            
+            bottomShadowView.addSubview(shapeCV)
+            ZLDrawShapeCell.zl.register(shapeCV) // Register the new cell
+            drawShapeCollectionView = shapeCV
         }
         
         if tools.contains(.filter) {
@@ -896,10 +952,24 @@ open class ZLEditImageViewController: UIViewController {
         }
     }
     
-    func drawBtnClick() {
-        let isSelected = selectedTool != .draw
+    func shapeBtnClick() {
+        let isSelected = (selectedTool != .shape || selectedTool != .arrow || selectedTool != .circle || selectedTool != .draw || selectedTool != .line || selectedTool != .square)
+       
         if isSelected {
-            selectedTool = .draw
+            switch (currentDrawShape) {
+            case .arrow:
+                selectedTool = .arrow
+            case .ellipse:
+                selectedTool = .circle
+            case .freehand:
+                selectedTool = .draw
+            case .line:
+                selectedTool = .line
+            case .rectangle:
+                selectedTool = .square
+            case .none:
+                selectedTool = .shape
+            }
         } else {
             selectedTool = nil
         }
@@ -996,14 +1066,18 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     func textStickerBtnClick() {
-        if let fontChooserContainerView = ZLImageEditorConfiguration.default().fontChooserContainerView {
-            fontChooserContainerView.show(in: view)
-            setToolView(show: false)
-            fontChooserContainerIsHidden = false
-        } else {
-            showInputTextVC(font: ZLImageEditorConfiguration.default().textStickerDefaultFont) { [weak self] text, textColor, font, image, style in
-                self?.addTextStickersView(text, textColor: textColor, font: font, image: image, style: style)
-            }
+//        if let fontChooserContainerView = ZLImageEditorConfiguration.default().fontChooserContainerView {
+//            fontChooserContainerView.show(in: view)
+//            setToolView(show: false)
+//            fontChooserContainerIsHidden = false
+//        } else {
+//            showInputTextVC(font: ZLImageEditorConfiguration.default().textStickerDefaultFont) { [weak self] text, textColor, font, image, style in
+//                self?.addTextStickersView(text, textColor: textColor, font: font, image: image, style: style)
+//            }
+//        }
+        
+        showInputTextVC(font: ZLImageEditorConfiguration.default().textStickerDefaultFont) { [weak self] text, textColor, font, image, style in
+            self?.addTextStickersView(text, textColor: textColor, font: font, image: image, style: style)
         }
         
         selectedTool = nil
@@ -1063,6 +1137,19 @@ open class ZLEditImageViewController: UIViewController {
         eraserLineView.isHidden = hidden
         drawColorCollectionView?.frame = CGRect(x: eraserLineView.zl.right + 11, y: 30, width: view.zl.width - eraserLineView.zl.right - 31, height: drawColViewH)
         drawColorCollectionView?.isHidden = hidden
+        drawShapeCollectionView?.frame = CGRect(x: 8, y: -10, width: view.zl.width, height: 40.0)
+        drawShapeCollectionView?.isHidden = hidden
+    }
+    
+    private func setDrawViewsWithoutEraser(hidden: Bool) {
+        eraserBtn.isHidden = true
+        eraserBtnBgBlurView.isHidden = true
+        eraserLineView.isHidden = true
+        eraserBtn.isSelected = false
+        drawColorCollectionView?.frame = CGRect(x: 11, y: 30, width: view.zl.width, height: drawColViewH)
+        drawColorCollectionView?.isHidden = hidden
+        drawShapeCollectionView?.frame = CGRect(x: 8, y: -10, width: view.zl.width, height: 40.0)
+        drawShapeCollectionView?.isHidden = hidden
     }
     
     private func setLineShapeArrowViews(hidden: Bool) {
@@ -1963,6 +2050,8 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
             return tools.count
         } else if collectionView == drawColorCollectionView {
             return drawColors.count
+        } else if collectionView == drawShapeCollectionView {
+            return shapeOptions.count
         } else if collectionView == filterCollectionView {
             return thumbnailFilterImages.count
         } else {
@@ -1973,12 +2062,13 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if collectionView == editToolCollectionView {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLEditToolCell.zl.identifier, for: indexPath) as! ZLEditToolCell
-            
             let toolType = tools[indexPath.row]
             cell.icon.isHighlighted = false
             cell.toolType = toolType
             cell.icon.isHighlighted = toolType == selectedTool
-            
+            if ((selectedTool == .arrow || selectedTool == .circle || selectedTool == .draw || selectedTool == .line || selectedTool == .square) && toolType == .shape) {
+                cell.icon.isHighlighted = true
+            }
             return cell
         } else if collectionView == drawColorCollectionView {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLDrawColorCell.zl.identifier, for: indexPath) as! ZLDrawColorCell
@@ -1991,6 +2081,13 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
                 cell.bgWhiteView.layer.transform = CATransform3DIdentity
             }
             
+            return cell
+        }else if collectionView == drawShapeCollectionView {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLDrawShapeCell.zl.identifier, for: indexPath) as! ZLDrawShapeCell
+            let c = shapeOptions[indexPath.row]
+            cell.icon.isHighlighted = false
+            cell.shapeType = c
+            cell.icon.isHighlighted = c == currentDrawShape
             return cell
         } else if collectionView == filterCollectionView {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLFilterImageCell.zl.identifier, for: indexPath) as! ZLFilterImageCell
@@ -2032,8 +2129,8 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
         if collectionView == editToolCollectionView {
             let toolType = tools[indexPath.row]
             switch toolType {
-            case .draw:
-                drawBtnClick()
+            case .shape:
+                shapeBtnClick()
             case .clip:
                 clipBtnClick()
             case .imageSticker:
@@ -2046,18 +2143,34 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
                 filterBtnClick()
             case .adjust:
                 adjustBtnClick()
-            case .line:
-                lineBtnClick()
-            case .arrow:
-                arrowBtnClick()
-            case .square:
-                squareBtnClick()
-            case .circle:
-                circleBtnClick()
+            case .line, .arrow, .square, .circle, .draw:
+                break
             }
         } else if collectionView == drawColorCollectionView {
             currentDrawColor = drawColors[indexPath.row]
             switchEraserBtnStatus(false, reloadData: false)
+        } else if collectionView == drawShapeCollectionView {
+            currentDrawShape = shapeOptions[indexPath.row]
+            switch currentDrawShape {
+            case .arrow:
+                selectedTool = .arrow
+                setDrawViewsWithoutEraser(hidden: false)
+            case .ellipse:
+                selectedTool = .circle
+                setDrawViewsWithoutEraser(hidden: false)
+            case .freehand:
+                selectedTool = .draw
+                setDrawViews(hidden: false)
+            case .line:
+                selectedTool = .line
+                setDrawViewsWithoutEraser(hidden: false)
+            case .rectangle:
+                selectedTool = .square
+                setDrawViewsWithoutEraser(hidden: false)
+            case .none:
+                break
+            }
+            drawShapeCollectionView?.reloadData()
         } else if collectionView == filterCollectionView {
             let filter = ZLImageEditorConfiguration.default().filters[indexPath.row]
             editorManager.storeAction(.filter(oldFilter: currentFilter, newFilter: filter))
@@ -2070,76 +2183,6 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
         }
         collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         collectionView.reloadData()
-    }
-    
-    func squareBtnClick() {
-        let isSelected = selectedTool != .square
-        if isSelected {
-            selectedTool = .square
-            // Show relevant sub-toolbars (e.g., color, width)
-            // Hide other sub-toolbars
-        } else {
-            selectedTool = nil
-            // Hide relevant sub-toolbars
-        }
-        
-        setDrawViews(hidden: false)
-        setLineShapeArrowViews(hidden: !isSelected)
-        setFilterViews(hidden: true)
-        setAdjustViews(hidden: true)
-    }
-    
-    func circleBtnClick() {
-        let isSelected = selectedTool != .circle
-        if isSelected {
-            selectedTool = .circle
-            // Show relevant sub-toolbars (e.g., color, width)
-            // Hide other sub-toolbars
-        } else {
-            selectedTool = nil
-            // Hide relevant sub-toolbars
-        }
-        
-        setDrawViews(hidden: false)
-        setLineShapeArrowViews(hidden: !isSelected)
-        setFilterViews(hidden: true)
-        setAdjustViews(hidden: true)
-    }
-    
-    
-    func arrowBtnClick() {
-        let isSelected = selectedTool != .arrow
-        if isSelected {
-            selectedTool = .arrow
-            // Show relevant sub-toolbars (e.g., color, width)
-            // Hide other sub-toolbars
-        } else {
-            selectedTool = nil
-            // Hide relevant sub-toolbars
-        }
-        
-        setDrawViews(hidden: false)
-        setLineShapeArrowViews(hidden: !isSelected)
-        setFilterViews(hidden: true)
-        setAdjustViews(hidden: true)
-    }
-    
-    
-    func lineBtnClick() { // Create similar for arrowBtnClick, shapeBtnClick
-        let isSelected = selectedTool != .line
-        if isSelected {
-            selectedTool = .line
-            // Show relevant sub-toolbars (e.g., color, width)
-            // Hide other sub-toolbars
-        } else {
-            selectedTool = nil
-            // Hide relevant sub-toolbars
-        }
-        
-        setDrawViews(hidden: false)
-        setLineShapeArrowViews(hidden: !isSelected)
-        setFilterViews(hidden: true)
-        setAdjustViews(hidden: true)
     }
 }
 

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		44D510AF2DB6056C004441B5 /* ZLDrawShapeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */; };
 		44E217C92D9E82B9002F151A /* ZLShapeStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217C82D9E82B8002F151A /* ZLShapeStates.swift */; };
 		44E217CB2D9E8322002F151A /* ZLLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217CA2D9E8321002F151A /* ZLLineView.swift */; };
 		44E217CD2D9E8338002F151A /* ZLArrowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217CC2D9E8337002F151A /* ZLArrowView.swift */; };
@@ -51,6 +52,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLDrawShapeCell.swift; sourceTree = "<group>"; };
 		44E217C82D9E82B8002F151A /* ZLShapeStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLShapeStates.swift; sourceTree = "<group>"; };
 		44E217CA2D9E8321002F151A /* ZLLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLLineView.swift; sourceTree = "<group>"; };
 		44E217CC2D9E8337002F151A /* ZLArrowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLArrowView.swift; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 		E4020902256BA00D0077F5DC /* General */ = {
 			isa = PBXGroup;
 			children = (
+				44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */,
 				44E217CE2D9E8348002F151A /* ZLShapeView.swift */,
 				44E217CC2D9E8337002F151A /* ZLArrowView.swift */,
 				44E217CA2D9E8321002F151A /* ZLLineView.swift */,
@@ -301,6 +304,7 @@
 				E402090E256BA1F40077F5DC /* ZLImageEditorLanguageDefine.swift in Sources */,
 				FDC144962BABE0B4004C2BCD /* ZLWeakProxy.m in Sources */,
 				FDC9B2442990D66300963047 /* ZLBaseStickerView.swift in Sources */,
+				44D510AF2DB6056C004441B5 /* ZLDrawShapeCell.swift in Sources */,
 				FD3073392AD80D4000CFB618 /* ZLPaths.swift in Sources */,
 				E40208EF256B9F9C0077F5DC /* ZLInputTextViewController.swift in Sources */,
 				E40208F1256B9F9C0077F5DC /* ZLFilter.swift in Sources */,
