@@ -88,18 +88,6 @@ public extension ZLImageEditorUIConfiguration {
     }
     
     @discardableResult
-    func ashbinNormalBgColor(_ color: UIColor) -> ZLImageEditorUIConfiguration {
-        ashbinNormalBgColor = color
-        return self
-    }
-    
-    @discardableResult
-    func ashbinTintBgColor(_ color: UIColor) -> ZLImageEditorUIConfiguration {
-        ashbinTintBgColor = color
-        return self
-    }
-    
-    @discardableResult
     func toolTitleNormalColor(_ color: UIColor) -> ZLImageEditorUIConfiguration {
         toolTitleNormalColor = color
         return self
