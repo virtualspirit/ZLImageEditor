@@ -47,12 +47,11 @@ class ZLLineView: ZLBaseStickerView {
             gesScale: state.gesScale,
             gesRotation: state.gesRotation,
             totalTranslationPoint: state.totalTranslationPoint,
-            showBorder: false
-            // showBorder: state.gesScale == 1 && state.gesRotation == 0 // Show border initially only if not transformed
+            showBorder: true
         )
         self.backgroundColor = .clear
         self.contentMode = .redraw
-        self.layer.borderWidth = 0 // Ensure no visual border
+        self.layer.borderWidth = 1// Ensure no visual border
     }
 
      required init?(coder: NSCoder) {

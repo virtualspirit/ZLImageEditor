@@ -84,12 +84,12 @@ public class ZLArrowState: ZLBaseStickertState {
 }
 
 public class ZLShapeState: ZLBaseStickertState {
-    let shapeType: ZLImageEditorConfiguration.ShapeType
-    let bounds: CGRect // Relative shape bounds within the sticker frame
-    let strokeColor: UIColor
-    let fillColor: UIColor?
-    let lineWidth: CGFloat
-    let cornerRadius: CGFloat // Only for rectangle
+    var shapeType: ZLImageEditorConfiguration.ShapeType
+    var bounds: CGRect // Relative shape bounds within the sticker frame
+    var strokeColor: UIColor
+    var fillColor: UIColor?
+    var lineWidth: CGFloat
+    var cornerRadius: CGFloat // Only for rectangle
 
      public init(
         id: String = UUID().uuidString,

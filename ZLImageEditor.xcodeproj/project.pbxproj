@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		44BC360B2DCF497400DEA351 /* ZLPassThroughView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BC360A2DCF497000DEA351 /* ZLPassThroughView.swift */; };
 		44D510AF2DB6056C004441B5 /* ZLDrawShapeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */; };
 		44E217C92D9E82B9002F151A /* ZLShapeStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217C82D9E82B8002F151A /* ZLShapeStates.swift */; };
 		44E217CB2D9E8322002F151A /* ZLLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217CA2D9E8321002F151A /* ZLLineView.swift */; };
@@ -52,6 +53,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		44BC360A2DCF497000DEA351 /* ZLPassThroughView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLPassThroughView.swift; sourceTree = "<group>"; };
 		44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLDrawShapeCell.swift; sourceTree = "<group>"; };
 		44E217C82D9E82B8002F151A /* ZLShapeStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLShapeStates.swift; sourceTree = "<group>"; };
 		44E217CA2D9E8321002F151A /* ZLLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLLineView.swift; sourceTree = "<group>"; };
@@ -98,6 +100,10 @@
 		FDE1A560282E61B500178B0F /* ZLEnlargeButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZLEnlargeButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		44BC36002DCF473800DEA351 /* Extensions */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Extensions; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		E40208D4256B9BA60077F5DC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -140,6 +146,8 @@
 		E4020902256BA00D0077F5DC /* General */ = {
 			isa = PBXGroup;
 			children = (
+				44BC360A2DCF497000DEA351 /* ZLPassThroughView.swift */,
+				44BC36002DCF473800DEA351 /* Extensions */,
 				44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */,
 				44E217CE2D9E8348002F151A /* ZLShapeView.swift */,
 				44E217CC2D9E8337002F151A /* ZLArrowView.swift */,
@@ -219,6 +227,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				44BC36002DCF473800DEA351 /* Extensions */,
+			);
 			name = ZLImageEditor;
 			productName = ZLImageEditor;
 			productReference = E40208D7256B9BA60077F5DC /* ZLImageEditor.framework */;
@@ -289,6 +300,7 @@
 				FDE1A55B282E58E700178B0F /* ZLImageEditorUIConfiguration+Chaining.swift in Sources */,
 				FDBD955E2B148C74005EE2F8 /* UIGraphicsImageRenderer+ZLImageEditor.swift in Sources */,
 				FD7E7508284E134600EF34DD /* ZLProgressHUD.swift in Sources */,
+				44BC360B2DCF497400DEA351 /* ZLPassThroughView.swift in Sources */,
 				FDD5289226C3FFCA00338B06 /* ZLImageEditor.swift in Sources */,
 				E4020900256BA0080077F5DC /* Cell+ZLImageEditor.swift in Sources */,
 				E40208EC256B9F9C0077F5DC /* ZLImageStickerView.swift in Sources */,

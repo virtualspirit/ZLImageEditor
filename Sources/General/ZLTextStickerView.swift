@@ -38,13 +38,13 @@ class ZLTextStickerView: ZLBaseStickerView {
         return view
     }()
     
-    var text: String
+    public var text: String
     
-    var textColor: UIColor
+    public var textColor: UIColor
 
-    var font: UIFont?
+    public var font: UIFont?
     
-    var style: ZLInputTextStyle
+    public var style: ZLInputTextStyle
     
     var image: UIImage {
         didSet {
@@ -138,7 +138,7 @@ class ZLTextStickerView: ZLBaseStickerView {
     override func tapAction(_ ges: UITapGestureRecognizer) {
         guard gesIsEnabled else { return }
         
-        if let timer = timer, timer.isValid {
+        if (!isHidden) {
             delegate?.sticker(self, editText: text)
         } else {
             super.tapAction(ges)

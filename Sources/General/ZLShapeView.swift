@@ -54,11 +54,11 @@ class ZLShapeView: ZLBaseStickerView {
              gesScale: state.gesScale,
              gesRotation: state.gesRotation,
              totalTranslationPoint: state.totalTranslationPoint,
-             showBorder: false
+             showBorder: true
         )
         self.backgroundColor = .clear
         self.contentMode = .redraw
-        self.layer.borderWidth = 0 // Ensure no visual border
+        self.layer.borderWidth = 1 // Ensure no visual border
     }
 
     required init?(coder: NSCoder) {
