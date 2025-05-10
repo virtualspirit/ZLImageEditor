@@ -122,9 +122,8 @@ class ZLShapeView: ZLBaseStickerView {
              if path.contains(point) { return self }
 
             // Option 2: Check with tolerance using stroked path (if needed near edge)
-            // let hitPathForFill = path.cgPath.copy(strokingWithWidth: tapTolerance, lineCap: .round, lineJoin: .round, miterLimit: 0)
-            // if hitPathForFill.contains(point) { return self }
-
+             let hitPathForFill = path.cgPath.copy(strokingWithWidth: tapTolerance, lineCap: .round, lineJoin: .round, miterLimit: 0)
+             if hitPathForFill.contains(point) { return self }
         } else {
             // Only stroked shape
             let hitWidth = max(self.lineWidth, 10) + tapTolerance
@@ -142,5 +141,15 @@ class ZLShapeView: ZLBaseStickerView {
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         let expandedBounds = self.bounds.insetBy(dx: -tapTolerance, dy: -tapTolerance)
         return expandedBounds.contains(point)
+    }
+    
+    func updateStrokeColor(_ color: UIColor) {
+        self.strokeColor = color
+        setNeedsDisplay()
+    }
+    
+    func updateFillColor(_ color: UIColor) {
+        self.fillColor = color
+        setNeedsDisplay()
     }
 }

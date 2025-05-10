@@ -105,4 +105,9 @@ class ZLLineView: ZLBaseStickerView {
        let expandedBounds = self.bounds.insetBy(dx: -tapTolerance, dy: -tapTolerance)
        return expandedBounds.contains(point)
    }
+    
+    func updateStrokeColor(_ color: UIColor) {
+        self.color = color
+        setNeedsDisplay()
+    }
 }

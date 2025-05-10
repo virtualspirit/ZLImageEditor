@@ -289,6 +289,8 @@ open class ZLEditImageViewController: UIViewController {
         
     var currentSticker: ZLBaseStickerView?
     
+    var shapeStyleSelectorView: ShapeStyleSelectorView!
+    
     var adjustSlider: ZLAdjustSlider?
     
     var animateDismiss = true
@@ -598,7 +600,7 @@ open class ZLEditImageViewController: UIViewController {
         mainScrollView.frame = view.bounds
         resetContainerViewFrame()
         
-        topShadowView.frame = CGRect(x: 0, y: 0, width: view.zl.width, height: 150)
+        topShadowView.frame = CGRect(x: 0, y: 0, width: view.zl.width, height: 50 + insets.top)
         topShadowLayer.frame = topShadowView.bounds
         
         bottomShadowView.frame = CGRect(x: 0, y: view.zl.height - 150 - insets.bottom, width: view.zl.width, height: 150 + insets.bottom)
@@ -615,6 +617,21 @@ open class ZLEditImageViewController: UIViewController {
         removeBtn.frame = CGRect(x: undoBtn.zl.left - 15 - 30, y: insets.top, width: 30, height: 30)
         duplicateBtn.frame = CGRect(x: removeBtn.zl.left - 15 - 30, y: insets.top, width: 30, height: 30)
         editBtn.frame = CGRect(x: duplicateBtn.zl.left - 15 - 30, y: insets.top, width: 30, height: 30)
+        
+        shapeStyleSelectorView = ShapeStyleSelectorView()
+        shapeStyleSelectorView.delegate = self
+
+        shapeStyleSelectorView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(shapeStyleSelectorView)
+
+        NSLayoutConstraint.activate([
+            shapeStyleSelectorView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
+            shapeStyleSelectorView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
+            shapeStyleSelectorView.topAnchor.constraint(equalTo: topShadowView.bottomAnchor, constant: 0),
+//            shapeStyleSelectorView.heightAnchor.constraint(equalToConstant: 250)
+        ])
+
+//        shapeStyleSelectorView.isHidden = true // Default hidden
         
         eraserBtn.frame = CGRect(x: 20, y: 30 + (drawColViewH - 36) / 2, width: 36, height: 36)
         eraserBtnBgBlurView.frame = eraserBtn.frame
@@ -787,6 +804,7 @@ open class ZLEditImageViewController: UIViewController {
             shapeLayout.itemSize = CGSize(width: 40, height: 40) // Adjust size
             shapeLayout.minimumInteritemSpacing = 10
             shapeLayout.sectionInset = UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10)
+            
             let shapeCV = UICollectionView(frame: .zero, collectionViewLayout: shapeLayout)
             shapeCV.backgroundColor = .clear
             shapeCV.showsHorizontalScrollIndicator = false
@@ -2000,6 +2018,14 @@ open class ZLEditImageViewController: UIViewController {
         
         currentSticker = sticker
         currentSticker?.showBorder()
+        
+        if currentSticker is ZLShapeView {
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLShapeView).strokeColor, fillColor: (currentSticker as! ZLShapeView).fillColor, strokeWidth: nil, strokeStyle: nil)
+        } else if currentSticker is ZLLineView {
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLLineView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
+        } else if currentSticker is ZLArrowView {
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLArrowView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
+        }
     }
     
     func unselectSticker() {
