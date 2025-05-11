@@ -27,6 +27,8 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
         case let .adjust(oldStatus, _):
             undoOrRedoAdjust(oldStatus)
         }
+        
+        updateTopBarButtonsForSelectedSticker()
     }
     
     func editorManager(_ manager: ZLEditorManager, redoAction action: ZLEditorAction) {
@@ -44,6 +46,8 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
         case let .adjust(_, newStatus):
             undoOrRedoAdjust(newStatus)
         }
+        
+        updateTopBarButtonsForSelectedSticker()
     }
     
     private func undoDraw(_ path: ZLDrawPath) {

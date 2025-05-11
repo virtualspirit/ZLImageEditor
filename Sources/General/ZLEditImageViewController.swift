@@ -184,7 +184,7 @@ open class ZLEditImageViewController: UIViewController {
     
     open lazy var undoBtn: ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type: .custom)
-        btn.setImage(.zl.getImage("zl_undo_disable"), for: .disabled)
+//        btn.setImage(.zl.getImage("zl_undo_disable"), for: .disabled)
         btn.setImage(.zl.getImage("zl_undo"), for: .normal)
         btn.adjustsImageWhenHighlighted = false
         btn.isEnabled = !editorManager.actions.isEmpty
@@ -196,7 +196,7 @@ open class ZLEditImageViewController: UIViewController {
     open lazy var redoBtn: ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type: .custom)
         btn.setImage(.zl.getImage("zl_redo"), for: .normal)
-        btn.setImage(.zl.getImage("zl_redo_disable"), for: .disabled)
+//        btn.setImage(.zl.getImage("zl_redo_disable"), for: .disabled)
         btn.adjustsImageWhenHighlighted = false
         btn.isEnabled = editorManager.actions.count != editorManager.redoActions.count
         btn.enlargeInset = 8
@@ -209,6 +209,7 @@ open class ZLEditImageViewController: UIViewController {
         btn.setImage(.zl.getImage("zl_remove"), for: .normal)
         btn.adjustsImageWhenHighlighted = false
         btn.enlargeInset = 8
+        btn.isEnabled = false
         btn.addTarget(self, action: #selector(removeBtnClick), for: .touchUpInside)
         return btn
     }()
@@ -218,6 +219,7 @@ open class ZLEditImageViewController: UIViewController {
         btn.setImage(.zl.getImage("zl_duplicate"), for: .normal)
         btn.adjustsImageWhenHighlighted = false
         btn.enlargeInset = 8
+        btn.isEnabled = false
         btn.addTarget(self, action: #selector(duplicateBtnClick), for: .touchUpInside)
         return btn
     }()
@@ -225,8 +227,11 @@ open class ZLEditImageViewController: UIViewController {
     open lazy var editBtn: ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type: .custom)
         btn.setImage(.zl.getImage("zl_pallete"), for: .normal)
-        btn.adjustsImageWhenHighlighted = false
+        btn.setImage(.zl.getImage("zl_pallete_selected"), for: .selected)
+        btn.adjustsImageWhenHighlighted = true
         btn.enlargeInset = 8
+        btn.isEnabled = false
+        btn.isSelected = false
         btn.addTarget(self, action: #selector(editBtnClick), for: .touchUpInside)
         return btn
     }()
@@ -593,8 +598,8 @@ open class ZLEditImageViewController: UIViewController {
         
         shapeStyleSelectorView = ShapeStyleSelectorView()
         shapeStyleSelectorView.delegate = self
-
         shapeStyleSelectorView.translatesAutoresizingMaskIntoConstraints = false
+        shapeStyleSelectorView.isHidden = true
         view.addSubview(shapeStyleSelectorView)
 
         NSLayoutConstraint.activate([
@@ -1207,6 +1212,8 @@ open class ZLEditImageViewController: UIViewController {
         editorManager.storeAction(.sticker(oldState: stateBeforeRemoval, newState: nil))
 
         currentSticker = nil
+        
+        updateTopBarButtonsForSelectedSticker()
     }
     
     @objc func duplicateBtnClick() {
@@ -1349,17 +1356,99 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     @objc func editBtnClick() {
-        
-    }
-    
-    @objc func tapAction(_ tap: UITapGestureRecognizer) {
-        if bottomShadowView.alpha == 1 {
-            setToolView(show: false)
-        } else {
-            setToolView(show: true)
+        guard let selectedSticker = currentSticker else {
+            editBtn.isSelected = false
+            shapeStyleSelectorView.isHidden = true
+            return
+        }
+
+        // Hanya aktifkan tombol edit untuk tipe stiker yang bisa di-style
+        let isStyleEditableSticker = selectedSticker is ZLShapeView ||
+                                    selectedSticker is ZLLineView ||
+                                    selectedSticker is ZLArrowView ||
+                                    selectedSticker is ZLFreehandDrawView
+
+        if !isStyleEditableSticker {
+            editBtn.isSelected = false
+            shapeStyleSelectorView.isHidden = true
+            return
         }
         
-        unselectSticker()
+        let newIsHiddenState = !shapeStyleSelectorView.isHidden
+        shapeStyleSelectorView.isHidden = newIsHiddenState
+        editBtn.isSelected = !newIsHiddenState // Highlighted jika selector terlihat
+
+        if !shapeStyleSelectorView.isHidden {
+            // Tentukan apakah stiker yang dipilih mendukung opsi fill
+            var canStickerHaveFill = false
+            if let shapeSticker = selectedSticker as? ZLShapeView {
+                canStickerHaveFill = (shapeSticker.shapeType == .rectangle || shapeSticker.shapeType == .ellipse)
+                shapeStyleSelectorView.showFillColorOptions = canStickerHaveFill // UPDATE DI SINI
+                shapeStyleSelectorView.setInitialStyle(strokeColor: shapeSticker.strokeColor, fillColor: shapeSticker.fillColor, strokeWidth: shapeSticker.lineWidth, strokeStyle: nil)
+            } else if let lineSticker = selectedSticker as? ZLLineView {
+                shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
+                shapeStyleSelectorView.setInitialStyle(strokeColor: lineSticker.color, fillColor: nil, strokeWidth: lineSticker.lineWidth, strokeStyle: nil)
+            } else if let arrowSticker = selectedSticker as? ZLArrowView {
+                shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
+                shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: nil)
+            } else if let freehandSticker = selectedSticker as? ZLFreehandDrawView {
+                 shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
+                shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: nil)
+            }
+        }
+    }
+
+    func updateTopBarButtonsForSelectedSticker() {
+        let stickerIsSelected = (currentSticker != nil)
+        removeBtn.isEnabled = stickerIsSelected
+        duplicateBtn.isEnabled = stickerIsSelected
+
+        let isStyleEditableSticker = stickerIsSelected &&
+                                    (currentSticker is ZLShapeView ||
+                                     currentSticker is ZLLineView ||
+                                     currentSticker is ZLArrowView ||
+                                     currentSticker is ZLFreehandDrawView)
+
+        editBtn.isEnabled = isStyleEditableSticker
+
+        if isStyleEditableSticker {
+            if !editBtn.isSelected { // Jika tombol edit tidak di-highlight (misalnya, baru saja memilih stiker)
+                shapeStyleSelectorView.isHidden = true
+                // shapeStyleSelectorView.showFillColorOptions TIDAK diubah di sini, biarkan editBtnClick yang mengaturnya
+            } else { // Tombol edit di-highlight, berarti selector harus terlihat
+                shapeStyleSelectorView.isHidden = false
+                // Update visibilitas opsi fill berdasarkan tipe stiker saat ini
+                var canStickerHaveFill = false
+                if let shapeSticker = currentSticker as? ZLShapeView {
+                    canStickerHaveFill = (shapeSticker.shapeType == .rectangle || shapeSticker.shapeType == .ellipse)
+                    shapeStyleSelectorView.setInitialStyle(strokeColor: shapeSticker.strokeColor, fillColor: shapeSticker.fillColor, strokeWidth: shapeSticker.lineWidth, strokeStyle: nil) // setInitialStyle juga akan dipanggil
+                } else if let lineSticker = currentSticker as? ZLLineView {
+                     shapeStyleSelectorView.setInitialStyle(strokeColor: lineSticker.color, fillColor: nil, strokeWidth: lineSticker.lineWidth, strokeStyle: nil)
+                } else if let arrowSticker = currentSticker as? ZLArrowView {
+                     shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: nil)
+                } else if let freehandSticker = currentSticker as? ZLFreehandDrawView {
+                     shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: nil)
+                }
+                shapeStyleSelectorView.showFillColorOptions = canStickerHaveFill // UPDATE DI SINI
+            }
+        } else {
+            // Tidak ada stiker yang bisa di-style dipilih
+            shapeStyleSelectorView.isHidden = true
+            shapeStyleSelectorView.showFillColorOptions = false // Reset
+            editBtn.isSelected = false
+        }
+    }
+
+    @objc func tapAction(_ tap: UITapGestureRecognizer) {
+        if currentSticker != nil {
+            unselectSticker()
+        } else {
+            if bottomShadowView.alpha == 1 {
+                setToolView(show: false)
+            } else {
+                setToolView(show: true)
+            }
+        }
     }
     
     @objc func handleFreeDrawACtion(_ pan:UIPanGestureRecognizer) {
@@ -2041,6 +2130,8 @@ open class ZLEditImageViewController: UIViewController {
     func selectSticker(sticker: ZLBaseStickerView) {
         unselectSticker()
         
+        setToolView(show: true)
+        
         currentSticker = sticker
         currentSticker?.showBorder()
         
@@ -2053,11 +2144,15 @@ open class ZLEditImageViewController: UIViewController {
         } else if currentSticker is ZLFreehandDrawView {
             shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLFreehandDrawView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
         }
+        
+        updateTopBarButtonsForSelectedSticker()
     }
     
     func unselectSticker() {
         currentSticker?.hideBorder()
         currentSticker = nil
+        
+        updateTopBarButtonsForSelectedSticker()
     }
 }
 

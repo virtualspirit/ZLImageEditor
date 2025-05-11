@@ -24,7 +24,6 @@ class ZLShapeView: ZLBaseStickerView {
 
             if fillColor == UIColor.clear {
                 self.fillColor = nil
-                return
             }
 
             if originalOldValue != self.fillColor {
