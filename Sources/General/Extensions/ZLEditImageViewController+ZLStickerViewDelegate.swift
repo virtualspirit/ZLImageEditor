@@ -28,7 +28,6 @@ extension ZLEditImageViewController: ZLStickerViewDelegate {
     
     func stickerOnOperation(_ sticker: ZLBaseStickerView, panGes: UIPanGestureRecognizer) {
         let point = panGes.location(in: view)
-        
     }
     
     func stickerEndOperation(_ sticker: ZLBaseStickerView, panGes: UIPanGestureRecognizer) {

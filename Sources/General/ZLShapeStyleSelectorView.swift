@@ -249,6 +249,10 @@ class ShapeStyleSelectorView: UIView {
     }
 
     @objc private func strokeColorButtonTapped(_ sender: UIButton) {
+        if (sender == selectedStrokeColorButton)  {
+            return
+        }
+        
         selectedStrokeColorButton?.isSelected = false
         selectedStrokeColorButton?.layer.borderColor = UIColor.clear.cgColor
          if selectedStrokeColorButton?.backgroundColor != .clear {
@@ -264,6 +268,10 @@ class ShapeStyleSelectorView: UIView {
     }
 
     @objc private func fillColorButtonTapped(_ sender: UIButton) {
+        if (sender == selectedFillColorButton)  {
+            return
+        }
+        
         selectedFillColorButton?.isSelected = false
         selectedFillColorButton?.layer.borderColor = UIColor.clear.cgColor
         if selectedFillColorButton?.backgroundColor != .clear {
@@ -281,6 +289,10 @@ class ShapeStyleSelectorView: UIView {
     }
     
     @objc private func strokeWidthButtonTapped(_ sender: UIButton) {
+        if (sender == selectedStrokeWidthButton)  {
+            return
+        }
+        
         selectedStrokeWidthButton?.isSelected = false
         selectedStrokeWidthButton?.backgroundColor = UIColor.white.withAlphaComponent(0.1)
 
@@ -349,6 +361,10 @@ class ShapeStyleSelectorView: UIView {
     }
 
     @objc private func strokeStyleButtonTapped(_ sender: UIButton) {
+        if (sender == selectedStrokeStyleButton)  {
+            return
+        }
+        
         selectedStrokeStyleButton?.isSelected = false
         selectedStrokeStyleButton?.backgroundColor = UIColor.white.withAlphaComponent(0.1)
 

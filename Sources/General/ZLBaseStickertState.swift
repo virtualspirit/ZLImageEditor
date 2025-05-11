@@ -58,7 +58,29 @@ public class ZLBaseStickertState: NSObject {
     }
 }
 
-public class ZLImageStickerState: ZLBaseStickertState { }
+public class ZLImageStickerState: ZLBaseStickertState {
+    public override init(
+        id: String = UUID().uuidString,
+        image: UIImage,
+        originScale: CGFloat,
+        originAngle: CGFloat,
+        originFrame: CGRect,
+        gesScale: CGFloat,
+        gesRotation: CGFloat,
+        totalTranslationPoint: CGPoint
+    ) {
+        super.init(
+            id: id,
+            image: image,
+            originScale: originScale,
+            originAngle: originAngle,
+            originFrame: originFrame,
+            gesScale: gesScale,
+            gesRotation: gesRotation,
+            totalTranslationPoint: totalTranslationPoint
+        )
+    }
+}
 
 public class ZLTextStickerState: ZLBaseStickertState {
     let text: String
@@ -67,7 +89,7 @@ public class ZLTextStickerState: ZLBaseStickertState {
     let style: ZLInputTextStyle
     
     public init(
-        id: String,
+        id: String = UUID().uuidString,
         text: String,
         textColor: UIColor,
         font: UIFont?,

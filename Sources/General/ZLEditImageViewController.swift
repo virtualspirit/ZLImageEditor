@@ -1241,13 +1241,11 @@ open class ZLEditImageViewController: UIViewController {
            // You might want to add checks here to prevent it from going too far off-screen.
            // For simplicity, this example assumes the offset is generally safe.
 
-           let newStickerID = UUID().uuidString
            var duplicateState: ZLBaseStickertState?
 
            // Create the specific type of state based on the original sticker's state
            if let imageState = originalState as? ZLImageStickerState {
                duplicateState = ZLImageStickerState(
-                   id: newStickerID,
                    image: imageState.image, // Or a copy if mutable
                    originScale: imageState.originScale,
                    originAngle: imageState.originAngle,
@@ -1261,7 +1259,6 @@ open class ZLEditImageViewController: UIViewController {
                )
            } else if let textState = originalState as? ZLTextStickerState {
                duplicateState = ZLTextStickerState(
-                   id: newStickerID,
                    text: textState.text,
                    textColor: textState.textColor,
                    font: textState.font,
@@ -1276,7 +1273,6 @@ open class ZLEditImageViewController: UIViewController {
                )
            } else if let freehandState = originalState as? ZLFreehandDrawState {
                duplicateState = ZLFreehandDrawState(
-                   id: newStickerID,
                    bezierPath: freehandState.bezierPath.copy() as! UIBezierPath, // Important to copy the path
                    color: freehandState.color,
                    lineWidth: freehandState.lineWidth,
@@ -1290,7 +1286,6 @@ open class ZLEditImageViewController: UIViewController {
                )
            } else if let lineState = originalState as? ZLLineState {
                duplicateState = ZLLineState(
-                   id: newStickerID,
                    startPoint: lineState.startPoint, // These points are relative to originFrame
                    endPoint: lineState.endPoint,     // So they don't need to change if originFrame moves
                    color: lineState.color,
@@ -1305,7 +1300,6 @@ open class ZLEditImageViewController: UIViewController {
                )
            } else if let arrowState = originalState as? ZLArrowState {
                 duplicateState = ZLArrowState(
-                   id: newStickerID,
                    startPoint: arrowState.startPoint,
                    endPoint: arrowState.endPoint,
                    color: arrowState.color,
@@ -1321,7 +1315,6 @@ open class ZLEditImageViewController: UIViewController {
                )
            } else if let shapeState = originalState as? ZLShapeState {
                duplicateState = ZLShapeState(
-                   id: newStickerID,
                    shapeType: shapeState.shapeType,
                    bounds: shapeState.bounds, // Bounds are relative to originFrame
                    strokeColor: shapeState.strokeColor,
@@ -1349,13 +1342,8 @@ open class ZLEditImageViewController: UIViewController {
                // 4. Add the sticker to the view hierarchy and configure it.
                //    The `addSticker` method should handle adding to `stickersContainer`
                //    and calling `configSticker`.
-               addStickerToViewHierarchy(duplicateStickerView) // Use the helper that doesn't store undo action
-
-               // 5. Inform the ZLEditorManager: this is like adding a new sticker.
-               //    oldState is nil, newState is the state of the just-created duplicate.
-               editorManager.storeAction(.sticker(oldState: nil, newState: finalDuplicateState))
-
-               // 6. Select the newly duplicated sticker.
+               addSticker(duplicateStickerView) // Use the helper that doesn't store undo action
+               
                selectSticker(sticker: duplicateStickerView)
            }
     }
