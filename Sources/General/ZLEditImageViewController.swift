@@ -1194,54 +1194,158 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     @objc func removeBtnClick() {
-        currentSticker?.remove()
+        
+        guard let stickerToRemove = currentSticker else {
+             // Optionally, provide feedback to the user if no sticker is selected
+             return
+         }
+        
+        let stateBeforeRemoval = stickerToRemove.state
+        
+        stickerToRemove.remove()
+        
+        editorManager.storeAction(.sticker(oldState: stateBeforeRemoval, newState: nil))
+
+        currentSticker = nil
     }
     
     @objc func duplicateBtnClick() {
-        var duplicateSticker: ZLBaseStickerView?
-        
-        if let sticker = currentSticker {
-            if sticker is ZLImageStickerView {
-                let image = sticker.state.image
-                let scale = mainScrollView.zoomScale
-                let originFrame = sticker.frame
-                
-                duplicateSticker = ZLImageStickerView(image: image, originScale: 1 / scale, originAngle: -currentClipStatus.angle, originFrame: originFrame)
-                
-            } else if sticker is ZLTextStickerView {
-                let textSticker = sticker as! ZLTextStickerView
+        guard let originalSticker = currentSticker else {
+               // print("No sticker selected to duplicate.")
+               return
+           }
 
-                let scale = mainScrollView.zoomScale
-                let originFrame = textSticker.frame
-                
-                duplicateSticker = ZLTextStickerView(
-                    text: textSticker.text,
-                    textColor: textSticker.textColor,
-                    font: textSticker.font,
-                    style: textSticker.style,
-                    image: textSticker.state.image,
-                    originScale: 1 / scale,
-                    originAngle: -currentClipStatus.angle,
-                    originFrame: originFrame
-                )
-            } else if sticker is ZLShapeView {
-                duplicateSticker = ZLShapeView(state: sticker.state as! ZLShapeState)
-            } else if sticker is ZLArrowView {
-                duplicateSticker = ZLArrowView(state: sticker.state as! ZLArrowState)
-            } else if sticker is ZLLineView {
-                duplicateSticker = ZLLineView(state: sticker.state as! ZLLineState)
-            } else if sticker is ZLFreehandDrawView {
-                duplicateSticker = ZLFreehandDrawView(state: sticker.state as! ZLFreehandDrawState)
-            }
-        }
-        
-        if let duplicateSticker = duplicateSticker {
-            var frame = duplicateSticker.originFrame
-            frame.origin.x = frame.origin.x + 20
-            frame.origin.y = frame.origin.y + 20
-            duplicateSticker.originFrame = frame
-            addSticker(duplicateSticker)
-        }
+           // 1. Get the state of the original sticker.
+           let originalState = originalSticker.state
+
+           // 2. Create a new state for the duplicate.
+           //    - Generate a new unique ID.
+           //    - Slightly offset the originFrame so the duplicate doesn't perfectly overlap.
+           //    - All other properties (image, text, color, scale, rotation, etc.) are copied.
+
+           var newOriginFrame = originalState.originFrame
+           let offset: CGFloat = 20.0 // How much to offset the duplicate
+           newOriginFrame.origin.x += offset / (originalState.originScale * originalState.gesScale) // Adjust offset by current scale
+           newOriginFrame.origin.y += offset / (originalState.originScale * originalState.gesScale)
+
+           // Ensure the new frame is still within reasonable bounds of the stickersContainer
+           // You might want to add checks here to prevent it from going too far off-screen.
+           // For simplicity, this example assumes the offset is generally safe.
+
+           let newStickerID = UUID().uuidString
+           var duplicateState: ZLBaseStickertState?
+
+           // Create the specific type of state based on the original sticker's state
+           if let imageState = originalState as? ZLImageStickerState {
+               duplicateState = ZLImageStickerState(
+                   id: newStickerID,
+                   image: imageState.image, // Or a copy if mutable
+                   originScale: imageState.originScale,
+                   originAngle: imageState.originAngle,
+                   originFrame: newOriginFrame, // Use the offset frame
+                   gesScale: imageState.gesScale,
+                   gesRotation: imageState.gesRotation,
+                   totalTranslationPoint: imageState.totalTranslationPoint // This might also need adjustment if it's absolute
+                                                                         // But usually, totalTranslationPoint is part of how originFrame is derived,
+                                                                         // so modifying originFrame might be enough.
+                                                                         // Let's assume originFrame modification covers position.
+               )
+           } else if let textState = originalState as? ZLTextStickerState {
+               duplicateState = ZLTextStickerState(
+                   id: newStickerID,
+                   text: textState.text,
+                   textColor: textState.textColor,
+                   font: textState.font,
+                   style: textState.style,
+                   image: textState.image, // This is the rendered text image
+                   originScale: textState.originScale,
+                   originAngle: textState.originAngle,
+                   originFrame: newOriginFrame,
+                   gesScale: textState.gesScale,
+                   gesRotation: textState.gesRotation,
+                   totalTranslationPoint: textState.totalTranslationPoint
+               )
+           } else if let freehandState = originalState as? ZLFreehandDrawState {
+               duplicateState = ZLFreehandDrawState(
+                   id: newStickerID,
+                   bezierPath: freehandState.bezierPath.copy() as! UIBezierPath, // Important to copy the path
+                   color: freehandState.color,
+                   lineWidth: freehandState.lineWidth,
+                   originalRatio: freehandState.originalRatio,
+                   originScale: freehandState.originScale,
+                   originAngle: freehandState.originAngle,
+                   originFrame: newOriginFrame,
+                   gesScale: freehandState.gesScale,
+                   gesRotation: freehandState.gesRotation,
+                   totalTranslationPoint: freehandState.totalTranslationPoint
+               )
+           } else if let lineState = originalState as? ZLLineState {
+               duplicateState = ZLLineState(
+                   id: newStickerID,
+                   startPoint: lineState.startPoint, // These points are relative to originFrame
+                   endPoint: lineState.endPoint,     // So they don't need to change if originFrame moves
+                   color: lineState.color,
+                   lineWidth: lineState.lineWidth,
+                   originScale: lineState.originScale,
+                   originAngle: lineState.originAngle,
+                   originFrame: newOriginFrame,
+                   gesScale: lineState.gesScale,
+                   gesRotation: lineState.gesRotation,
+                   totalTranslationPoint: lineState.totalTranslationPoint
+               )
+           } else if let arrowState = originalState as? ZLArrowState {
+                duplicateState = ZLArrowState(
+                   id: newStickerID,
+                   startPoint: arrowState.startPoint,
+                   endPoint: arrowState.endPoint,
+                   color: arrowState.color,
+                   lineWidth: arrowState.lineWidth,
+                   headSize: arrowState.headSize,
+                   originScale: arrowState.originScale,
+                   originAngle: arrowState.originAngle,
+                   originFrame: newOriginFrame,
+                   gesScale: arrowState.gesScale,
+                   gesRotation: arrowState.gesRotation,
+                   totalTranslationPoint: arrowState.totalTranslationPoint
+               )
+           } else if let shapeState = originalState as? ZLShapeState {
+               duplicateState = ZLShapeState(
+                   id: newStickerID,
+                   shapeType: shapeState.shapeType,
+                   bounds: shapeState.bounds, // Bounds are relative to originFrame
+                   strokeColor: shapeState.strokeColor,
+                   fillColor: shapeState.fillColor,
+                   lineWidth: shapeState.lineWidth,
+                   cornerRadius: shapeState.cornerRadius,
+                   originScale: shapeState.originScale,
+                   originAngle: shapeState.originAngle,
+                   originFrame: newOriginFrame,
+                   gesScale: shapeState.gesScale,
+                   gesRotation: shapeState.gesRotation,
+                   totalTranslationPoint: shapeState.totalTranslationPoint
+               )
+           }
+           // Add other sticker types if you have them
+
+           guard let finalDuplicateState = duplicateState else {
+               // print("Failed to create state for duplicate.")
+               return
+           }
+
+           // 3. Create the new sticker view from the duplicate state.
+           if let duplicateStickerView = ZLBaseStickerView.initWithState(finalDuplicateState) {
+               // 4. Add the sticker to the view hierarchy and configure it.
+               //    The `addSticker` method should handle adding to `stickersContainer`
+               //    and calling `configSticker`.
+               addStickerToViewHierarchy(duplicateStickerView) // Use the helper that doesn't store undo action
+
+               // 5. Inform the ZLEditorManager: this is like adding a new sticker.
+               //    oldState is nil, newState is the state of the just-created duplicate.
+               editorManager.storeAction(.sticker(oldState: nil, newState: finalDuplicateState))
+
+               // 6. Select the newly duplicated sticker.
+               selectSticker(sticker: duplicateStickerView)
+           }
     }
     
     @objc func editBtnClick() {

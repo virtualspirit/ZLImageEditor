@@ -72,26 +72,48 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
     }
     
     private func undoSticker(_ oldState: ZLBaseStickertState?, _ newState: ZLBaseStickertState?) {
-        guard let oldState else {
-            removeSticker(id: newState?.id)
-            return
+        // If oldState is nil, it was a creation. Undo is removing the 'newState' sticker.
+        if oldState == nil, let stateToEffectivelyRemove = newState { // This matches undoing a creation/duplication
+            removeStickerViewWithID(stateToEffectivelyRemove.id)
         }
         
-        removeSticker(id: oldState.id)
-        if let sticker = ZLBaseStickerView.initWithState(oldState) {
-            addSticker(sticker)
+        // If newState is nil, it was a removal. Undo is re-adding the 'oldState' sticker.
+        else if newState == nil, let stateToReAdd = oldState {
+           if let sticker = ZLBaseStickerView.initWithState(stateToReAdd) {
+               addStickerToViewHierarchy(sticker) // Just add to view, don't store new undo action
+               selectSticker(sticker: sticker) // Optionally re-select
+           }
+        }
+        // If both are non-nil, it was a modification. Undo is applying oldState.
+        else if let stateToApply = oldState, let currentState = newState {
+            removeStickerViewWithID(currentState.id) // Remove current visual
+           if let sticker = ZLBaseStickerView.initWithState(stateToApply) {
+               addStickerToViewHierarchy(sticker)
+               selectSticker(sticker: sticker) // Optionally re-select
+           }
         }
     }
     
     private func redoSticker(_ oldState: ZLBaseStickertState?, _ newState: ZLBaseStickertState?) {
-        guard let newState else {
-            removeSticker(id: oldState?.id)
-            return
+        // If newState is nil, it was a removal. Redo is removing the 'oldState' sticker again.
+        if newState == nil, let stateToEffectivelyRemove = oldState {
+            removeStickerViewWithID(stateToEffectivelyRemove.id)
+            currentSticker = nil // Ensure it's deselected
         }
-        
-        removeSticker(id: newState.id)
-        if let sticker = ZLBaseStickerView.initWithState(newState) {
-            addSticker(sticker)
+        // If oldState is nil, it was a creation. Redo is re-adding the 'newState' sticker.
+        else if oldState == nil, let stateToReAdd = newState {
+            if let sticker = ZLBaseStickerView.initWithState(stateToReAdd) {
+                addStickerToViewHierarchy(sticker)
+                selectSticker(sticker: sticker) // Optionally re-select
+            }
+        }
+        // If both are non-nil, it was a modification. Redo is applying newState.
+        else if let originalState = oldState, let stateToApply = newState {
+            removeStickerViewWithID(originalState.id) // Remove current visual
+            if let sticker = ZLBaseStickerView.initWithState(stateToApply) {
+                addStickerToViewHierarchy(sticker)
+                selectSticker(sticker: sticker) // Optionally re-select
+            }
         }
     }
     
@@ -140,5 +162,31 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
         adjustCollectionView.selectItem(at: indexPath, animated: true, scrollPosition: .centeredHorizontally)
         adjustCollectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         adjustCollectionView.reloadData()
+    }
+    
+    // Helper to remove a sticker view by ID without creating an undo action itself
+    func removeStickerViewWithID(_ id: String) {
+        for view in stickersContainer.subviews {
+            if let sticker = view as? ZLBaseStickerView, sticker.id == id {
+                sticker.removeFromSuperview()
+                // If this was the selected sticker, deselect it
+                if currentSticker === sticker {
+                    currentSticker = nil
+                }
+                break
+            }
+        }
+    }
+
+    // Helper to add a sticker to view hierarchy without creating an undo action
+    // This is used by undo/redo logic.
+    func addStickerToViewHierarchy(_ sticker: ZLBaseStickerView) {
+        // Ensure no duplicate sticker with the same ID exists from a previous state
+        removeStickerViewWithID(sticker.id)
+        
+        stickersContainer.addSubview(sticker)
+        sticker.frame = sticker.originFrame // Set its initial frame from its state
+        configSticker(sticker) // Re-apply delegate and gesture recognizer requirements
+        // DO NOT call editorManager.storeAction here, as this is part of an undo/redo
     }
 }
