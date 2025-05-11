@@ -21,9 +21,12 @@ class ShapeStyleSelectorView: UIView {
     private let strokeColors: [UIColor] = ZLImageEditorConfiguration.default().drawColors
     // Tambahkan .clear di awal untuk opsi "No Fill"
     private let fillColors: [UIColor] = [UIColor.clear] + ZLImageEditorConfiguration.default().drawColors
-    private let strokeWidths: [(label: String, value: CGFloat)] = [("Small", 2), ("Medium", 5), ("Large", 10)] // Sesuaikan nilai jika perlu
-    // private let strokeStyles: [String] = ["Solid", "Dashed", "Dotted"] // Jika Anda ingin mengimplementasikannya
-
+    private let strokeWidths: [(label: String, value: CGFloat)] = [("Small", ZLStrokeWidthConstants.small), ("Medium", ZLStrokeWidthConstants.medium), ("Large", ZLStrokeWidthConstants.large)] // Sesuaikan nilai jika perlu
+    private let strokeStyles: [(label: String, value: String)] = [ // Gunakan enum jika lebih baik
+         ("Solid", "solid"),    // .butt biasanya menghasilkan garis solid standar
+         ("Dashed", "dashed"), // Untuk dashed/dotted, kita perlu menggambar path secara manual
+         ("Dotted", "dotted")   // atau menggunakan lineDashPattern pada CAShapeLayer
+     ]
     private let mainStackView = UIStackView()
 
     // Views untuk bagian Stroke Color
@@ -44,6 +47,12 @@ class ShapeStyleSelectorView: UIView {
     private var strokeWidthStackView: UIStackView!
     private var strokeWidthButtons: [UIButton] = []
     private var selectedStrokeWidthButton: UIButton?
+    
+    // Views untuk bagian Stroke Style
+    private var strokeStyleTitleLabel: UILabel!
+     private var strokeStyleStackView: UIStackView!
+     private var strokeStyleButtons: [UIButton] = []
+     private var selectedStrokeStyleButton: UIButton?
 
     public var showFillColorOptions: Bool = false {
         didSet {
@@ -77,18 +86,17 @@ class ShapeStyleSelectorView: UIView {
         self.layer.cornerRadius = 12
         self.layer.masksToBounds = true // Jika menggunakan blur effect, ini mungkin perlu false
 
-        // Optional: Add UIVisualEffectView for blur
-        // let blurEffect = UIBlurEffect(style: .dark)
-        // let blurView = UIVisualEffectView(effect: blurEffect)
-        // blurView.translatesAutoresizingMaskIntoConstraints = false
-        // addSubview(blurView)
-        // NSLayoutConstraint.activate([
-        //     blurView.topAnchor.constraint(equalTo: topAnchor),
-        //     blurView.bottomAnchor.constraint(equalTo: bottomAnchor),
-        //     blurView.leadingAnchor.constraint(equalTo: leadingAnchor),
-        //     blurView.trailingAnchor.constraint(equalTo: trailingAnchor),
-        // ])
-        // insertSubview(mainStackView, aboveSubview: blurView) // Pastikan stackView di atas blur
+         let blurEffect = UIBlurEffect(style: .dark)
+         let blurView = UIVisualEffectView(effect: blurEffect)
+         blurView.translatesAutoresizingMaskIntoConstraints = false
+         addSubview(blurView)
+         NSLayoutConstraint.activate([
+             blurView.topAnchor.constraint(equalTo: topAnchor),
+             blurView.bottomAnchor.constraint(equalTo: bottomAnchor),
+             blurView.leadingAnchor.constraint(equalTo: leadingAnchor),
+             blurView.trailingAnchor.constraint(equalTo: trailingAnchor),
+         ])
+         insertSubview(mainStackView, aboveSubview: blurView) // Pastikan stackView di atas blur
 
         mainStackView.axis = .vertical
         mainStackView.spacing = 16 // Spasi antar section
@@ -107,7 +115,7 @@ class ShapeStyleSelectorView: UIView {
         setupStrokeColorSection()
         setupFillColorSection()
         setupStrokeWidthSection()
-        // setupStrokeStyleSection() // Jika Anda ingin menambahkannya
+        setupStrokeStyleSection()
     }
 
     private func createTitleLabel(text: String) -> UILabel {
@@ -309,6 +317,48 @@ class ShapeStyleSelectorView: UIView {
              strokeWidthButtonTapped(firstButton)
         }
 
-        // Handle strokeStyle if implemented
+        // Set Stroke Style
+         if let strokeStyle = strokeStyle, let index = strokeStyles.firstIndex(where: { $0.label == strokeStyle }) {
+             strokeStyleButtonTapped(strokeStyleButtons[index])
+         } else if let firstButton = strokeStyleButtons.first { // Default ke gaya pertama (misalnya "Solid")
+              strokeStyleButtonTapped(firstButton)
+         }
     }
+    
+    private func setupStrokeStyleSection() {
+        strokeStyleTitleLabel = createTitleLabel(text: "Stroke Style")
+        mainStackView.addArrangedSubview(strokeStyleTitleLabel)
+        if #available(iOS 11.0, *) {
+            mainStackView.setCustomSpacing(8, after: strokeStyleTitleLabel)
+        } else {
+            // Fallback on earlier versions
+        }
+
+        for (index, styleItem) in strokeStyles.enumerated() {
+            // Tombol akan menampilkan styleItem.label
+            strokeStyleButtons.append(createTextButton(title: styleItem.label, action: #selector(strokeStyleButtonTapped(_:)), tag: index))
+        }
+        strokeStyleStackView = UIStackView(arrangedSubviews: strokeStyleButtons)
+        strokeStyleStackView.axis = .horizontal
+        strokeStyleStackView.spacing = 8
+        strokeStyleStackView.distribution = .fillEqually // Atau .fillProportionally jika label berbeda panjang
+        strokeStyleStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        mainStackView.addArrangedSubview(strokeStyleStackView)
+        strokeStyleStackView.heightAnchor.constraint(equalToConstant: 30).isActive = true
+    }
+
+    @objc private func strokeStyleButtonTapped(_ sender: UIButton) {
+        selectedStrokeStyleButton?.isSelected = false
+        selectedStrokeStyleButton?.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+
+        sender.isSelected = true
+        sender.backgroundColor = UIColor.white.withAlphaComponent(0.3) // Highlight warna
+        selectedStrokeStyleButton = sender
+        
+        let styleItem = strokeStyles[sender.tag]
+        delegate?.didSelectStrokeStyle(styleItem.label) // Kirim label gaya ("Solid", "Dashed", "Dotted")
+                                                        // Atau kirim styleItem.value jika Anda ingin mengirim enum
+    }
+
 }

@@ -31,7 +31,17 @@ extension ZLEditImageViewController: ShapeStyleSelectorViewDelegate {
     }
 
     func didSelectStrokeWidth(_ width: CGFloat) {
-//        (currentSticker as? ZLShapeView)?.strokeWidth = width
+        if let sticker = currentSticker {
+            if sticker is ZLShapeView {
+                (sticker as! ZLShapeView).lineWidth = width
+            } else if sticker is ZLLineView {
+                (sticker as! ZLLineView).lineWidth = width
+            } else if sticker is ZLArrowView {
+                (sticker as! ZLArrowView).lineWidth = width
+            } else if sticker is ZLFreehandDrawView {
+                (sticker as! ZLFreehandDrawView).lineWidth = width
+            }
+        }
     }
 
     func didSelectStrokeStyle(_ style: String) {

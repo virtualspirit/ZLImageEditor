@@ -321,7 +321,7 @@ open class ZLEditImageViewController: UIViewController {
     
     var drawPaths: [ZLDrawPath]
     
-    var drawLineWidth: CGFloat = 6
+    var drawLineWidth: CGFloat = ZLStrokeWidthConstants.medium
     
     var mosaicPaths: [ZLMosaicPath]
     
@@ -1678,7 +1678,7 @@ open class ZLEditImageViewController: UIViewController {
 
             // 2. Get current tool settings (color, width, shape type etc.)
             let currentLineColor = currentDrawColor // Replace with actual selection
-            let currentLineWidth = ZLImageEditorConfiguration.default().defaultLineWidth // Replace with actual selection
+            let currentLineWidth = drawLineWidth // Replace with actual selection
 
             // 3. Create State object (Calculate points relative to originFrame)
             let relativeStart = CGPoint(x: start.x - originFrame.minX, y: start.y - originFrame.minY)
@@ -2136,13 +2136,13 @@ open class ZLEditImageViewController: UIViewController {
         currentSticker?.showBorder()
         
         if currentSticker is ZLShapeView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLShapeView).strokeColor, fillColor: (currentSticker as! ZLShapeView).fillColor, strokeWidth: nil, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLShapeView).strokeColor, fillColor: (currentSticker as! ZLShapeView).fillColor, strokeWidth: (currentSticker as! ZLShapeView).lineWidth, strokeStyle: nil)
         } else if currentSticker is ZLLineView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLLineView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLLineView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLLineView).lineWidth, strokeStyle: nil)
         } else if currentSticker is ZLArrowView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLArrowView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLArrowView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLArrowView).lineWidth, strokeStyle: nil)
         } else if currentSticker is ZLFreehandDrawView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLFreehandDrawView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLFreehandDrawView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLFreehandDrawView).lineWidth, strokeStyle: nil)
         }
         
         updateTopBarButtonsForSelectedSticker()

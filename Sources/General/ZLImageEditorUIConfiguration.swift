@@ -141,3 +141,9 @@ enum ZLCustomImageDeploy {
 struct ZLFreehandDrawConstants {
     static let framePadding: CGFloat = 2.0 // Adjust as needed (e.g., 1.0 or 2.0 points)
 }
+
+struct ZLStrokeWidthConstants {
+    static let small: CGFloat = 2.0
+    static let medium: CGFloat = 6.0
+    static let large: CGFloat = 10.0
+}
