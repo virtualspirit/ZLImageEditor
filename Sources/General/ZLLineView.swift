@@ -10,8 +10,20 @@ import UIKit
 class ZLLineView: ZLBaseStickerView {
     var startPoint: CGPoint // Relative to bounds
     var endPoint: CGPoint   // Relative to bounds
-    var color: UIColor
-    var lineWidth: CGFloat
+    public var color: UIColor {
+        didSet {
+            if oldValue != color {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    public var lineWidth: CGFloat {
+        didSet {
+            if oldValue != lineWidth {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
 
     // Define a tolerance for tapping near the line
     private let tapTolerance: CGFloat = 0.0 // Adjust as needed (larger makes it easier to tap)
@@ -105,9 +117,4 @@ class ZLLineView: ZLBaseStickerView {
        let expandedBounds = self.bounds.insetBy(dx: -tapTolerance, dy: -tapTolerance)
        return expandedBounds.contains(point)
    }
-    
-    func updateStrokeColor(_ color: UIColor) {
-        self.color = color
-        setNeedsDisplay()
-    }
 }

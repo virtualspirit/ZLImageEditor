@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		44BC360B2DCF497400DEA351 /* ZLPassThroughView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BC360A2DCF497000DEA351 /* ZLPassThroughView.swift */; };
 		44BC36162DCF85BE00DEA351 /* ZLShapeStyleSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BC36152DCF85B900DEA351 /* ZLShapeStyleSelectorView.swift */; };
+		44BC361D2DD0D85800DEA351 /* ZLFreehandDrawState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BC361C2DD0D85700DEA351 /* ZLFreehandDrawState.swift */; };
+		44BC361F2DD0D87300DEA351 /* ZLFreehandDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BC361E2DD0D87300DEA351 /* ZLFreehandDrawView.swift */; };
 		44D510AF2DB6056C004441B5 /* ZLDrawShapeCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */; };
 		44E217C92D9E82B9002F151A /* ZLShapeStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217C82D9E82B8002F151A /* ZLShapeStates.swift */; };
 		44E217CB2D9E8322002F151A /* ZLLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E217CA2D9E8321002F151A /* ZLLineView.swift */; };
@@ -56,6 +58,8 @@
 /* Begin PBXFileReference section */
 		44BC360A2DCF497000DEA351 /* ZLPassThroughView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLPassThroughView.swift; sourceTree = "<group>"; };
 		44BC36152DCF85B900DEA351 /* ZLShapeStyleSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLShapeStyleSelectorView.swift; sourceTree = "<group>"; };
+		44BC361C2DD0D85700DEA351 /* ZLFreehandDrawState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLFreehandDrawState.swift; sourceTree = "<group>"; };
+		44BC361E2DD0D87300DEA351 /* ZLFreehandDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLFreehandDrawView.swift; sourceTree = "<group>"; };
 		44D510AE2DB6056B004441B5 /* ZLDrawShapeCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLDrawShapeCell.swift; sourceTree = "<group>"; };
 		44E217C82D9E82B8002F151A /* ZLShapeStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLShapeStates.swift; sourceTree = "<group>"; };
 		44E217CA2D9E8321002F151A /* ZLLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLLineView.swift; sourceTree = "<group>"; };
@@ -148,6 +152,8 @@
 		E4020902256BA00D0077F5DC /* General */ = {
 			isa = PBXGroup;
 			children = (
+				44BC361E2DD0D87300DEA351 /* ZLFreehandDrawView.swift */,
+				44BC361C2DD0D85700DEA351 /* ZLFreehandDrawState.swift */,
 				44BC36152DCF85B900DEA351 /* ZLShapeStyleSelectorView.swift */,
 				44BC360A2DCF497000DEA351 /* ZLPassThroughView.swift */,
 				44BC36002DCF473800DEA351 /* Extensions */,
@@ -306,6 +312,7 @@
 				44BC360B2DCF497400DEA351 /* ZLPassThroughView.swift in Sources */,
 				FDD5289226C3FFCA00338B06 /* ZLImageEditor.swift in Sources */,
 				E4020900256BA0080077F5DC /* Cell+ZLImageEditor.swift in Sources */,
+				44BC361D2DD0D85800DEA351 /* ZLFreehandDrawState.swift in Sources */,
 				E40208EC256B9F9C0077F5DC /* ZLImageStickerView.swift in Sources */,
 				E40208F7256B9FCB0077F5DC /* CGFloat+ZLImageEditor.swift in Sources */,
 				FDE1A55D282E595C00178B0F /* UIColor+ZLImageEditor.swift in Sources */,
@@ -325,6 +332,7 @@
 				E40208EF256B9F9C0077F5DC /* ZLInputTextViewController.swift in Sources */,
 				E40208F1256B9F9C0077F5DC /* ZLFilter.swift in Sources */,
 				FDB3113328752F7300845756 /* ZLWeakProxy.swift in Sources */,
+				44BC361F2DD0D87300DEA351 /* ZLFreehandDrawView.swift in Sources */,
 				E402090A256BA1DE0077F5DC /* ZLImageEditorDefine.swift in Sources */,
 				E40208ED256B9F9C0077F5DC /* ZLTextStickerView.swift in Sources */,
 			);

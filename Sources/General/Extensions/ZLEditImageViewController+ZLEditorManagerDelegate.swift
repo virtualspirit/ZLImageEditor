@@ -16,8 +16,6 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
         switch action {
         case let .draw(path):
             undoDraw(path)
-        case let .eraser(paths):
-            undoEraser(paths)
         case let .clip(oldStatus, _):
             undoOrRedoClip(oldStatus)
         case let .sticker(oldState, newState):
@@ -35,8 +33,6 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
         switch action {
         case let .draw(path):
             redoDraw(path)
-        case let .eraser(paths):
-            redoEraser(paths)
         case let .clip(_, newStatus):
             undoOrRedoClip(newStatus)
         case let .sticker(oldState, newState):
@@ -57,18 +53,6 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
     
     private func redoDraw(_ path: ZLDrawPath) {
         drawPaths.append(path)
-        drawLine()
-    }
-    
-    private func undoEraser(_ paths: [ZLDrawPath]) {
-        paths.forEach { $0.willDelete = false }
-        drawPaths.append(contentsOf: paths)
-        drawPaths = drawPaths.sorted { $0.index < $1.index }
-        drawLine()
-    }
-    
-    private func redoEraser(_ paths: [ZLDrawPath]) {
-        drawPaths.removeAll { paths.contains($0) }
         drawLine()
     }
     

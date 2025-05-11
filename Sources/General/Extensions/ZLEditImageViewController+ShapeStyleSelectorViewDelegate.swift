@@ -11,11 +11,13 @@ extension ZLEditImageViewController: ShapeStyleSelectorViewDelegate {
     func didSelectStrokeColor(_ color: UIColor) {
         if let sticker = currentSticker {
             if sticker is ZLShapeView {
-                (sticker as! ZLShapeView).updateStrokeColor(color)
+                (sticker as! ZLShapeView).strokeColor = color
             } else if sticker is ZLLineView {
-                (sticker as! ZLLineView).updateStrokeColor(color)
+                (sticker as! ZLLineView).color = color
             } else if sticker is ZLArrowView {
-                (sticker as! ZLArrowView).updateStrokeColor(color)
+                (sticker as! ZLArrowView).color = color
+            } else if sticker is ZLFreehandDrawView {
+                (sticker as! ZLFreehandDrawView).color = color;
             }
         }
     }
@@ -23,7 +25,7 @@ extension ZLEditImageViewController: ShapeStyleSelectorViewDelegate {
     func didSelectFillColor(_ color: UIColor) {
         if let sticker = currentSticker {
             if sticker is ZLShapeView {
-                (sticker as! ZLShapeView).updateFillColor(color)
+                (sticker as! ZLShapeView).fillColor = color
             }
         }
     }

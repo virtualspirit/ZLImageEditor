@@ -39,7 +39,7 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
             
             let c = drawColors[indexPath.row]
             cell.color = c
-            if c == currentDrawColor, !eraserBtn.isSelected {
+            if c == currentDrawColor {
                 cell.bgWhiteView.layer.transform = CATransform3DMakeScale(1.2, 1.2, 1)
             } else {
                 cell.bgWhiteView.layer.transform = CATransform3DIdentity
@@ -112,25 +112,25 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
             }
         } else if collectionView == drawColorCollectionView {
             currentDrawColor = drawColors[indexPath.row]
-            switchEraserBtnStatus(false, reloadData: false)
+            setDrawViews(hidden: false)
         } else if collectionView == drawShapeCollectionView {
             currentDrawShape = shapeOptions[indexPath.row]
             switch currentDrawShape {
             case .arrow:
                 selectedTool = .arrow
-                setDrawViewsWithoutEraser(hidden: false)
+                setDrawViews(hidden: false)
             case .ellipse:
                 selectedTool = .circle
-                setDrawViewsWithoutEraser(hidden: false)
+                setDrawViews(hidden: false)
             case .freehand:
                 selectedTool = .draw
                 setDrawViews(hidden: false)
             case .line:
                 selectedTool = .line
-                setDrawViewsWithoutEraser(hidden: false)
+                setDrawViews(hidden: false)
             case .rectangle:
                 selectedTool = .square
-                setDrawViewsWithoutEraser(hidden: false)
+                setDrawViews(hidden: false)
             case .none:
                 break
             }

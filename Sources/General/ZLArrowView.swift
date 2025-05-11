@@ -10,8 +10,20 @@ import UIKit
 class ZLArrowView: ZLBaseStickerView {
     var startPoint: CGPoint
     var endPoint: CGPoint
-    var color: UIColor
-    var lineWidth: CGFloat
+    public var color: UIColor {
+        didSet {
+            if oldValue != color {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    public var lineWidth: CGFloat {
+        didSet {
+            if oldValue != lineWidth {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
     var headSize: CGFloat
 
     private let tapTolerance: CGFloat = 0.0
@@ -140,11 +152,5 @@ class ZLArrowView: ZLBaseStickerView {
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         let expandedBounds = self.bounds.insetBy(dx: -tapTolerance, dy: -tapTolerance)
         return expandedBounds.contains(point)
-    }
-    
-    
-    func updateStrokeColor(_ color: UIColor) {
-        self.color = color
-        setNeedsDisplay()
     }
 }

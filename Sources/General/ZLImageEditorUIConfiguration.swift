@@ -137,3 +137,7 @@ enum ZLCustomImageDeploy {
     case vertical
     case horizontal
 }
+
+struct ZLFreehandDrawConstants {
+    static let framePadding: CGFloat = 2.0 // Adjust as needed (e.g., 1.0 or 2.0 points)
+}

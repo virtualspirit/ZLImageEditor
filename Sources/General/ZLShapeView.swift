@@ -10,9 +10,37 @@ import UIKit
 class ZLShapeView: ZLBaseStickerView {
     var shapeType: ZLImageEditorConfiguration.ShapeType
     var shapeBounds: CGRect // Relative bounds within the sticker's frame
-    var strokeColor: UIColor
-    var fillColor: UIColor?
-    var lineWidth: CGFloat
+    public var strokeColor: UIColor {
+        didSet {
+            if oldValue != strokeColor {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    
+    public var fillColor: UIColor? {
+        didSet {
+            let originalOldValue = oldValue
+
+            if fillColor == UIColor.clear {
+                self.fillColor = nil
+                return
+            }
+
+            if originalOldValue != self.fillColor {
+                self.setNeedsDisplay()
+            }
+        }
+    }
+    
+    public var lineWidth: CGFloat {
+        didSet {
+            if oldValue != lineWidth {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    
     var cornerRadius: CGFloat
 
     // Increased tolerance for shapes, especially if only stroked
@@ -141,19 +169,5 @@ class ZLShapeView: ZLBaseStickerView {
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         let expandedBounds = self.bounds.insetBy(dx: -tapTolerance, dy: -tapTolerance)
         return expandedBounds.contains(point)
-    }
-    
-    func updateStrokeColor(_ color: UIColor) {
-        self.strokeColor = color
-        setNeedsDisplay()
-    }
-    
-    func updateFillColor(_ color: UIColor) {
-        if (color == UIColor.clear) {
-            self.fillColor = nil
-        } else {
-            self.fillColor = color
-        }
-        setNeedsDisplay()
     }
 }

@@ -255,37 +255,6 @@ open class ZLEditImageViewController: UIViewController {
     open var adjustCollectionView: UICollectionView?
     
     open var drawShapeCollectionView: UICollectionView?
-    
-    open lazy var eraserBtn: ZLEnlargeButton = {
-        let btn = ZLEnlargeButton(type: .custom)
-        btn.setImage(.zl.getImage("zl_eraser"), for: .normal)
-        btn.setImage(.zl.getImage("zl_eraser_selected"), for: .selected)
-        btn.addTarget(self, action: #selector(eraserBtnClick), for: .touchUpInside)
-        btn.isHidden = true
-        return btn
-    }()
-    
-    open lazy var eraserBtnBgBlurView: UIVisualEffectView = {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .light))
-        view.isHidden = true
-        view.layer.cornerRadius = 18
-        view.layer.masksToBounds = true
-        return view
-    }()
-    
-    open lazy var eraserLineView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .zl.rgba(89, 95, 107, 0.8)
-        view.isHidden = true
-        return view
-    }()
-    
-    open lazy var eraserCircleView: UIImageView = {
-        let imageView = UIImageView(image: .zl.getImage("zl_eraser_circle"))
-        imageView.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
-        imageView.isHidden = true
-        return imageView
-    }()
         
     var currentSticker: ZLBaseStickerView?
     
@@ -320,6 +289,10 @@ open class ZLEditImageViewController: UIViewController {
     
     // Show text and image stickers.
     lazy var stickersContainer = UIView()
+    
+    private var currentDrawingLivePath: UIBezierPath?
+    private var currentDrawingLivePoints: [CGPoint] = []
+    private var currentDrawingPreviewLayer: CAShapeLayer?
     
     var mosaicImage: UIImage?
     
@@ -633,10 +606,7 @@ open class ZLEditImageViewController: UIViewController {
 
 //        shapeStyleSelectorView.isHidden = true // Default hidden
         
-        eraserBtn.frame = CGRect(x: 20, y: 30 + (drawColViewH - 36) / 2, width: 36, height: 36)
-        eraserBtnBgBlurView.frame = eraserBtn.frame
-        eraserLineView.frame = CGRect(x: eraserBtn.zl.right + 11, y: eraserBtn.frame.midY - 10, width: 1, height: 20)
-        drawColorCollectionView?.frame = CGRect(x: eraserLineView.zl.right + 11, y: 30, width: view.zl.width - eraserLineView.zl.right - 31, height: drawColViewH)
+        drawColorCollectionView?.frame = CGRect(x: 11, y: 30, width: view.zl.width, height: drawColViewH)
         
         adjustCollectionView?.frame = CGRect(x: 20, y: 20, width: view.zl.width - 40, height: adjustColViewH)
         if ZLImageEditorUIConfiguration.default().adjustSliderType == .vertical {
@@ -772,11 +742,6 @@ open class ZLEditImageViewController: UIViewController {
         bottomShadowView.addSubview(doneBtn)
         
         if tools.contains(.shape) {
-            bottomShadowView.addSubview(eraserBtnBgBlurView)
-            bottomShadowView.addSubview(eraserBtn)
-            bottomShadowView.addSubview(eraserLineView)
-            containerView.addSubview(eraserCircleView)
-            
             impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
             let drawColorLayout = UICollectionViewFlowLayout()
@@ -996,21 +961,6 @@ open class ZLEditImageViewController: UIViewController {
         setAdjustViews(hidden: true)
     }
     
-    @objc private func eraserBtnClick() {
-        switchEraserBtnStatus(!eraserBtn.isSelected)
-    }
-    
-    func switchEraserBtnStatus(_ isSelected: Bool, reloadData: Bool = true) {
-        guard eraserBtn.isSelected != isSelected else { return }
-        
-        eraserBtn.isSelected = isSelected
-        eraserBtnBgBlurView.isHidden = !isSelected
-        
-        if reloadData {
-            drawColorCollectionView?.reloadData()
-        }
-    }
-    
     func clipBtnClick() {
         preClipStatus = currentClipStatus
         
@@ -1138,20 +1088,6 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     func setDrawViews(hidden: Bool) {
-        eraserBtn.isHidden = hidden
-        eraserBtnBgBlurView.isHidden = hidden || !eraserBtn.isSelected
-        eraserLineView.isHidden = hidden
-        drawColorCollectionView?.frame = CGRect(x: eraserLineView.zl.right + 11, y: 30, width: view.zl.width - eraserLineView.zl.right - 31, height: drawColViewH)
-        drawColorCollectionView?.isHidden = hidden
-        drawShapeCollectionView?.frame = CGRect(x: 8, y: -10, width: view.zl.width, height: 40.0)
-        drawShapeCollectionView?.isHidden = hidden
-    }
-    
-    func setDrawViewsWithoutEraser(hidden: Bool) {
-        eraserBtn.isHidden = true
-        eraserBtnBgBlurView.isHidden = true
-        eraserLineView.isHidden = true
-        eraserBtn.isSelected = false
         drawColorCollectionView?.frame = CGRect(x: 11, y: 30, width: view.zl.width, height: drawColViewH)
         drawColorCollectionView?.isHidden = hidden
         drawShapeCollectionView?.frame = CGRect(x: 8, y: -10, width: view.zl.width, height: 40.0)
@@ -1159,10 +1095,6 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     func setLineShapeArrowViews(hidden: Bool) {
-        eraserBtn.isHidden = true
-        eraserBtnBgBlurView.isHidden = true
-        eraserLineView.isHidden = true
- 
         drawColorCollectionView?.frame = CGRect(x: 0, y: 30, width: containerView.frame.width, height: drawColViewH)
         drawColorCollectionView?.isHidden = hidden
     }
@@ -1298,12 +1230,12 @@ open class ZLEditImageViewController: UIViewController {
                 duplicateSticker = ZLArrowView(state: sticker.state as! ZLArrowState)
             } else if sticker is ZLLineView {
                 duplicateSticker = ZLLineView(state: sticker.state as! ZLLineState)
+            } else if sticker is ZLFreehandDrawView {
+                duplicateSticker = ZLFreehandDrawView(state: sticker.state as! ZLFreehandDrawState)
             }
         }
         
         if let duplicateSticker = duplicateSticker {
-            print("origin frame: \(duplicateSticker.originFrame)")
-            print("frame: \(duplicateSticker.frame)")
             var frame = duplicateSticker.originFrame
             frame.origin.x = frame.origin.x + 20
             frame.origin.y = frame.origin.y + 20
@@ -1324,6 +1256,141 @@ open class ZLEditImageViewController: UIViewController {
         }
         
         unselectSticker()
+    }
+    
+    @objc func handleFreeDrawACtion(_ pan:UIPanGestureRecognizer) {
+        let point = pan.location(in: stickersContainer)
+        
+        if pan.state == .began {
+            setToolView(show: false)
+            mainScrollView.isScrollEnabled = false
+
+            currentDrawingLivePoints = [point]
+            currentDrawingLivePath = UIBezierPath()
+            currentDrawingLivePath?.lineWidth = drawLineWidth
+            currentDrawingLivePath?.lineCapStyle = .round
+            currentDrawingLivePath?.lineJoinStyle = .round
+            currentDrawingLivePath?.move(to: point)
+
+            currentDrawingPreviewLayer?.removeFromSuperlayer()
+            currentDrawingPreviewLayer = CAShapeLayer()
+            currentDrawingPreviewLayer?.strokeColor = currentDrawColor.cgColor
+            currentDrawingPreviewLayer?.fillColor = UIColor.clear.cgColor
+            currentDrawingPreviewLayer?.lineWidth = drawLineWidth
+            currentDrawingPreviewLayer?.lineCap = .round
+            currentDrawingPreviewLayer?.lineJoin = .round
+            currentDrawingPreviewLayer?.path = currentDrawingLivePath?.cgPath
+            stickersContainer.layer.addSublayer(currentDrawingPreviewLayer!)
+
+        } else if pan.state == .changed {
+            guard let livePath = currentDrawingLivePath else { return }
+            currentDrawingLivePoints.append(point)
+            livePath.addLine(to: point)
+            currentDrawingPreviewLayer?.path = livePath.cgPath
+
+        } else if pan.state == .cancelled || pan.state == .ended {
+            mainScrollView.isScrollEnabled = true
+            setToolView(show: true, delay: 0.5)
+            currentDrawingPreviewLayer?.removeFromSuperlayer()
+            currentDrawingPreviewLayer = nil
+            
+            guard let livePath = currentDrawingLivePath, !currentDrawingLivePoints.isEmpty else {
+                currentDrawingLivePath = nil
+                currentDrawingLivePoints.removeAll()
+                return
+            }
+            
+            let pathContentBoundingBox = livePath.bounds // Bounding box of the path's centerline
+            let expandedBoundingBox = pathContentBoundingBox.insetBy(dx: -drawLineWidth/2, dy: -drawLineWidth/2) // Expanded for line width
+
+            // Now, add extra padding for the view's frame
+            let viewOriginFrame = expandedBoundingBox.insetBy(dx: -ZLFreehandDrawConstants.framePadding,
+                                                             dy: -ZLFreehandDrawConstants.framePadding)
+
+            // Create ZLDrawPath with points relative to the EXPANDED BOUNDING BOX (expandedBoundingBox),
+            // NOT relative to viewOriginFrame. The view's extra padding is outside of where the path itself is drawn.
+            let relativePath = UIBezierPath()
+            relativePath.lineWidth = drawLineWidth
+            relativePath.lineCapStyle = .round
+            relativePath.lineJoinStyle = .round
+
+            if let firstPoint = currentDrawingLivePoints.first {
+                // Points are made relative to the *content's* expanded box,
+                // and will be drawn starting at framePadding within the view.
+                relativePath.move(to: CGPoint(x: (firstPoint.x - expandedBoundingBox.minX) + ZLFreehandDrawConstants.framePadding,
+                                                y: (firstPoint.y - expandedBoundingBox.minY) + ZLFreehandDrawConstants.framePadding))
+            }
+            for i in 1..<currentDrawingLivePoints.count {
+                let p = currentDrawingLivePoints[i]
+                relativePath.addLine(to: CGPoint(x: (p.x - expandedBoundingBox.minX) + ZLFreehandDrawConstants.framePadding,
+                                                 y: (p.y - expandedBoundingBox.minY) + ZLFreehandDrawConstants.framePadding))
+            }
+
+            let drawPathObject = ZLDrawPath(
+                pathColor: currentDrawColor, // Initial color
+                pathWidth: drawLineWidth,    // Initial width
+                defaultLinePath: 0,
+                ratio: 1.0,
+                startPoint: CGPoint(x: (currentDrawingLivePoints.first!.x - expandedBoundingBox.minX) + ZLFreehandDrawConstants.framePadding,
+                                    y: (currentDrawingLivePoints.first!.y - expandedBoundingBox.minY) + ZLFreehandDrawConstants.framePadding)
+            )
+            drawPathObject.path = relativePath // The UIBezierPath from user's gesture
+
+            let originScale = 1.0 / mainScrollView.zoomScale
+            let originAngle = -currentClipStatus.angle
+
+            let freehandState = ZLFreehandDrawState(
+                // Pass the UIBezierPath directly
+                bezierPath: drawPathObject.path.copy() as! UIBezierPath, // Pass a copy
+                color: currentDrawColor,      // Initial color for the state
+                lineWidth: drawLineWidth,     // Initial line width for the state
+                originalRatio: drawPathObject.ratio, // Store original ZLDrawPath.ratio if needed
+                originScale: originScale,
+                originAngle: originAngle,
+                originFrame: viewOriginFrame,
+                gesScale: 1.0,
+                gesRotation: 0,
+                totalTranslationPoint: .zero
+            )
+            let freehandView = ZLFreehandDrawView(state: freehandState)
+            addSticker(freehandView)
+
+            currentDrawingLivePath = nil
+            currentDrawingLivePoints.removeAll()
+        }
+    }
+    
+    @objc func handleMozaicAction(_ pan: UIPanGestureRecognizer) {
+        let point = pan.location(in: imageView)
+        if pan.state == .began {
+            setToolView(show: false)
+            
+            var actualSize = currentClipStatus.editRect.size
+            if shouldSwapSize {
+                swap(&actualSize.width, &actualSize.height)
+            }
+            let ratio = min(
+                mainScrollView.frame.width / currentClipStatus.editRect.width,
+                mainScrollView.frame.height / currentClipStatus.editRect.height
+            )
+            
+            let pathW = mosaicLineWidth / mainScrollView.zoomScale
+            let path = ZLMosaicPath(pathWidth: pathW, ratio: ratio, startPoint: point)
+            
+            mosaicImageLayerMaskLayer?.lineWidth = pathW
+            mosaicImageLayerMaskLayer?.path = path.path.cgPath
+            mosaicPaths.append(path)
+        } else if pan.state == .changed {
+            let path = mosaicPaths.last
+            path?.addLine(to: point)
+            mosaicImageLayerMaskLayer?.path = path?.path.cgPath
+        } else if pan.state == .cancelled || pan.state == .ended {
+            setToolView(show: true, delay: 0.5)
+            if let path = mosaicPaths.last {
+                editorManager.storeAction(.mosaic(path))
+            }
+            generateNewMosaicImage()
+        }
     }
     
     @objc func handleLineShapeArrowAction(_ pan: UIPanGestureRecognizer) {
@@ -1454,156 +1521,12 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     @objc func drawAction(_ pan: UIPanGestureRecognizer) {
-        // 橡皮擦
-        if selectedTool == .draw, eraserBtn.isSelected {
-            eraserAction(pan)
-            return
-        }
-        
         if selectedTool == .draw {
-            let point = pan.location(in: drawingImageView)
-            if pan.state == .began {
-                setToolView(show: false)
-                
-                let originalRatio = min(mainScrollView.frame.width / originalImage.size.width, mainScrollView.frame.height / originalImage.size.height)
-                let ratio = min(
-                    mainScrollView.frame.width / currentClipStatus.editRect.width,
-                    mainScrollView.frame.height / currentClipStatus.editRect.height
-                )
-                let scale = ratio / originalRatio
-                // Zoom to original size
-                var size = drawingImageView.frame.size
-                size.width /= scale
-                size.height /= scale
-                if shouldSwapSize {
-                    swap(&size.width, &size.height)
-                }
-                
-                var toImageScale = ZLEditImageViewController.maxDrawLineImageWidth / size.width
-                if editImage.size.width / editImage.size.height > 1 {
-                    toImageScale = ZLEditImageViewController.maxDrawLineImageWidth / size.height
-                }
-                
-                let path = ZLDrawPath(
-                    pathColor: currentDrawColor,
-                    pathWidth: drawLineWidth / mainScrollView.zoomScale,
-                    defaultLinePath: defaultDrawPathWidth,
-                    ratio: ratio / originalRatio / toImageScale,
-                    startPoint: point
-                )
-
-                drawPaths.append(path)
-            } else if pan.state == .changed {
-                let path = drawPaths.last
-                path?.addLine(to: point)
-                drawLine()
-            } else if pan.state == .cancelled || pan.state == .ended {
-                setToolView(show: true, delay: 0.5)
-                if let path = drawPaths.last {
-                    editorManager.storeAction(.draw(path))
-                }
-            }
+            handleFreeDrawACtion(pan)
         } else if selectedTool == .mosaic {
-            let point = pan.location(in: imageView)
-            if pan.state == .began {
-                setToolView(show: false)
-                
-                var actualSize = currentClipStatus.editRect.size
-                if shouldSwapSize {
-                    swap(&actualSize.width, &actualSize.height)
-                }
-                let ratio = min(
-                    mainScrollView.frame.width / currentClipStatus.editRect.width,
-                    mainScrollView.frame.height / currentClipStatus.editRect.height
-                )
-                
-                let pathW = mosaicLineWidth / mainScrollView.zoomScale
-                let path = ZLMosaicPath(pathWidth: pathW, ratio: ratio, startPoint: point)
-                
-                mosaicImageLayerMaskLayer?.lineWidth = pathW
-                mosaicImageLayerMaskLayer?.path = path.path.cgPath
-                mosaicPaths.append(path)
-            } else if pan.state == .changed {
-                let path = mosaicPaths.last
-                path?.addLine(to: point)
-                mosaicImageLayerMaskLayer?.path = path?.path.cgPath
-            } else if pan.state == .cancelled || pan.state == .ended {
-                setToolView(show: true, delay: 0.5)
-                if let path = mosaicPaths.last {
-                    editorManager.storeAction(.mosaic(path))
-                }
-                generateNewMosaicImage()
-            }
+            handleMozaicAction(pan)
         } else {
             handleLineShapeArrowAction(pan)
-        }
-    }
-    
-    func eraserAction(_ pan: UIPanGestureRecognizer) {
-        // 相对于drawingImageView的point
-        let point = pan.location(in: drawingImageView)
-        let originalRatio = min(mainScrollView.frame.width / originalImage.size.width, mainScrollView.frame.height / originalImage.size.height)
-        let ratio = min(
-            mainScrollView.frame.width / currentClipStatus.editRect.width,
-            mainScrollView.frame.height / currentClipStatus.editRect.height
-        )
-        let scale = ratio / originalRatio
-        // 缩放到最初的size
-        var size = drawingImageView.frame.size
-        size.width /= scale
-        size.height /= scale
-        if shouldSwapSize {
-            swap(&size.width, &size.height)
-        }
-        
-        var toImageScale = ZLEditImageViewController.maxDrawLineImageWidth / size.width
-        if editImage.size.width / editImage.size.height > 1 {
-            toImageScale = ZLEditImageViewController.maxDrawLineImageWidth / size.height
-        }
-        
-        let pointScale = ratio / originalRatio / toImageScale
-        // 转换为drawPath的point
-        let drawPoint = CGPoint(x: point.x / pointScale, y: point.y / pointScale)
-        if pan.state == .began {
-            eraserCircleView.isHidden = false
-            impactFeedback?.prepare()
-        }
-        
-        if pan.state == .began || pan.state == .changed {
-            var transform: CGAffineTransform = .identity
-            
-            let angle = ((Int(currentClipStatus.angle) % 360) + 360) % 360
-            let drawingImageViewSize = drawingImageView.frame.size
-            if angle == 90 {
-                transform = transform.translatedBy(x: 0, y: -drawingImageViewSize.width)
-            } else if angle == 180 {
-                transform = transform.translatedBy(x: -drawingImageViewSize.width, y: -drawingImageViewSize.height)
-            } else if angle == 270 {
-                transform = transform.translatedBy(x: -drawingImageViewSize.height, y: 0)
-            }
-            transform = transform.concatenating(drawingImageView.transform)
-            eraserCircleView.center = point.applying(transform)
-            
-            var needDraw = false
-            for path in drawPaths {
-                if path.path.contains(drawPoint), !deleteDrawPaths.contains(path) {
-                    path.willDelete = true
-                    deleteDrawPaths.append(path)
-                    needDraw = true
-                    impactFeedback?.impactOccurred()
-                }
-            }
-            if needDraw {
-                drawLine()
-            }
-        } else {
-            eraserCircleView.isHidden = true
-            if !deleteDrawPaths.isEmpty {
-                editorManager.storeAction(.eraser(deleteDrawPaths))
-                drawPaths.removeAll { deleteDrawPaths.contains($0) }
-                deleteDrawPaths.removeAll()
-                drawLine()
-            }
         }
     }
     
@@ -1785,7 +1708,6 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     func addSticker(_ sticker: ZLBaseStickerView) {
-        print("ADD STICKER")
         stickersContainer.addSubview(sticker)
         sticker.frame = sticker.originFrame
         configSticker(sticker)
@@ -1985,7 +1907,6 @@ open class ZLEditImageViewController: UIViewController {
             format.scale = self.editImage.scale
         } imageActions: { context in
             editImage.draw(at: .zero)
-            drawingImageView.image?.draw(in: CGRect(origin: .zero, size: imageSize))
             
             if !stickersContainer.subviews.isEmpty {
                 let scale = self.imageSize.width / stickersContainer.frame.width
@@ -2025,6 +1946,8 @@ open class ZLEditImageViewController: UIViewController {
             shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLLineView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
         } else if currentSticker is ZLArrowView {
             shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLArrowView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
+        } else if currentSticker is ZLFreehandDrawView {
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLFreehandDrawView).color, fillColor: nil, strokeWidth: nil, strokeStyle: nil)
         }
     }
     
