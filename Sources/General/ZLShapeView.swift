@@ -149,7 +149,11 @@ class ZLShapeView: ZLBaseStickerView {
     }
     
     func updateFillColor(_ color: UIColor) {
-        self.fillColor = color
+        if (color == UIColor.clear) {
+            self.fillColor = nil
+        } else {
+            self.fillColor = color
+        }
         setNeedsDisplay()
     }
 }
