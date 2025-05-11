@@ -11,6 +11,7 @@ public class ZLLineState: ZLBaseStickertState {
     let endPoint: CGPoint   // Relative to bounds
     let color: UIColor
     let lineWidth: CGFloat
+    let strokeStyle: String // "solid", "dashed", "dotted"
 
     public init(
         id: String = UUID().uuidString,
@@ -23,12 +24,14 @@ public class ZLLineState: ZLBaseStickertState {
         originFrame: CGRect,
         gesScale: CGFloat,
         gesRotation: CGFloat,
-        totalTranslationPoint: CGPoint
+        totalTranslationPoint: CGPoint,
+        strokeStyle: String
     ) {
         self.startPoint = startPoint
         self.endPoint = endPoint
         self.color = color
         self.lineWidth = lineWidth
+        self.strokeStyle = strokeStyle
         // Note: Passing a placeholder UIImage to base, as it expects one, but we won't use it.
         // Alternatively, modify ZLBaseStickertState to make image optional or create a new base.
         super.init(
@@ -50,6 +53,7 @@ public class ZLArrowState: ZLBaseStickertState {
     let color: UIColor
     let lineWidth: CGFloat
     let headSize: CGFloat
+    let strokeStyle: String // "solid", "dashed", "dotted"
 
     public init(
         id: String = UUID().uuidString,
@@ -63,13 +67,15 @@ public class ZLArrowState: ZLBaseStickertState {
         originFrame: CGRect,
         gesScale: CGFloat,
         gesRotation: CGFloat,
-        totalTranslationPoint: CGPoint
+        totalTranslationPoint: CGPoint,
+        strokeStyle: String
     ) {
         self.startPoint = startPoint
         self.endPoint = endPoint
         self.color = color
         self.lineWidth = lineWidth
         self.headSize = headSize
+        self.strokeStyle = strokeStyle
         super.init(
             id: id,
             image: UIImage(), // Placeholder
@@ -90,6 +96,7 @@ public class ZLShapeState: ZLBaseStickertState {
     var fillColor: UIColor?
     var lineWidth: CGFloat
     var cornerRadius: CGFloat // Only for rectangle
+    let strokeStyle: String // "solid", "dashed", "dotted"
 
      public init(
         id: String = UUID().uuidString,
@@ -104,7 +111,8 @@ public class ZLShapeState: ZLBaseStickertState {
         originFrame: CGRect,
         gesScale: CGFloat,
         gesRotation: CGFloat,
-        totalTranslationPoint: CGPoint
+        totalTranslationPoint: CGPoint,
+        strokeStyle: String
     ) {
         self.shapeType = shapeType
         self.bounds = bounds
@@ -112,6 +120,7 @@ public class ZLShapeState: ZLBaseStickertState {
         self.fillColor = fillColor
         self.lineWidth = lineWidth
         self.cornerRadius = cornerRadius
+        self.strokeStyle = strokeStyle
         super.init(
             id: id,
             image: UIImage(), // Placeholder

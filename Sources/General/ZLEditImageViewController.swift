@@ -323,6 +323,8 @@ open class ZLEditImageViewController: UIViewController {
     
     var drawLineWidth: CGFloat = ZLStrokeWidthConstants.medium
     
+    var drawLineStyle: String = "solid"
+    
     var mosaicPaths: [ZLMosaicPath]
     
     var mosaicLineWidth: CGFloat = 25
@@ -1298,7 +1300,8 @@ open class ZLEditImageViewController: UIViewController {
                    originFrame: newOriginFrame,
                    gesScale: lineState.gesScale,
                    gesRotation: lineState.gesRotation,
-                   totalTranslationPoint: lineState.totalTranslationPoint
+                   totalTranslationPoint: lineState.totalTranslationPoint,
+                   strokeStyle: lineState.strokeStyle
                )
            } else if let arrowState = originalState as? ZLArrowState {
                 duplicateState = ZLArrowState(
@@ -1313,7 +1316,8 @@ open class ZLEditImageViewController: UIViewController {
                    originFrame: newOriginFrame,
                    gesScale: arrowState.gesScale,
                    gesRotation: arrowState.gesRotation,
-                   totalTranslationPoint: arrowState.totalTranslationPoint
+                   totalTranslationPoint: arrowState.totalTranslationPoint,
+                   strokeStyle: arrowState.strokeStyle
                )
            } else if let shapeState = originalState as? ZLShapeState {
                duplicateState = ZLShapeState(
@@ -1329,7 +1333,8 @@ open class ZLEditImageViewController: UIViewController {
                    originFrame: newOriginFrame,
                    gesScale: shapeState.gesScale,
                    gesRotation: shapeState.gesRotation,
-                   totalTranslationPoint: shapeState.totalTranslationPoint
+                   totalTranslationPoint: shapeState.totalTranslationPoint,
+                   strokeStyle: shapeState.strokeStyle
                )
            }
            // Add other sticker types if you have them
@@ -1384,13 +1389,13 @@ open class ZLEditImageViewController: UIViewController {
             if let shapeSticker = selectedSticker as? ZLShapeView {
                 canStickerHaveFill = (shapeSticker.shapeType == .rectangle || shapeSticker.shapeType == .ellipse)
                 shapeStyleSelectorView.showFillColorOptions = canStickerHaveFill // UPDATE DI SINI
-                shapeStyleSelectorView.setInitialStyle(strokeColor: shapeSticker.strokeColor, fillColor: shapeSticker.fillColor, strokeWidth: shapeSticker.lineWidth, strokeStyle: nil)
+                shapeStyleSelectorView.setInitialStyle(strokeColor: shapeSticker.strokeColor, fillColor: shapeSticker.fillColor, strokeWidth: shapeSticker.lineWidth, strokeStyle: shapeSticker.strokeStyle)
             } else if let lineSticker = selectedSticker as? ZLLineView {
                 shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
-                shapeStyleSelectorView.setInitialStyle(strokeColor: lineSticker.color, fillColor: nil, strokeWidth: lineSticker.lineWidth, strokeStyle: nil)
+                shapeStyleSelectorView.setInitialStyle(strokeColor: lineSticker.color, fillColor: nil, strokeWidth: lineSticker.lineWidth, strokeStyle: lineSticker.strokeStyle)
             } else if let arrowSticker = selectedSticker as? ZLArrowView {
                 shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
-                shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: nil)
+                shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: arrowSticker.strokeStyle)
             } else if let freehandSticker = selectedSticker as? ZLFreehandDrawView {
                  shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
                 shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: nil)
@@ -1421,11 +1426,11 @@ open class ZLEditImageViewController: UIViewController {
                 var canStickerHaveFill = false
                 if let shapeSticker = currentSticker as? ZLShapeView {
                     canStickerHaveFill = (shapeSticker.shapeType == .rectangle || shapeSticker.shapeType == .ellipse)
-                    shapeStyleSelectorView.setInitialStyle(strokeColor: shapeSticker.strokeColor, fillColor: shapeSticker.fillColor, strokeWidth: shapeSticker.lineWidth, strokeStyle: nil) // setInitialStyle juga akan dipanggil
+                    shapeStyleSelectorView.setInitialStyle(strokeColor: shapeSticker.strokeColor, fillColor: shapeSticker.fillColor, strokeWidth: shapeSticker.lineWidth, strokeStyle: shapeSticker.strokeStyle) // setInitialStyle juga akan dipanggil
                 } else if let lineSticker = currentSticker as? ZLLineView {
-                     shapeStyleSelectorView.setInitialStyle(strokeColor: lineSticker.color, fillColor: nil, strokeWidth: lineSticker.lineWidth, strokeStyle: nil)
+                    shapeStyleSelectorView.setInitialStyle(strokeColor: lineSticker.color, fillColor: nil, strokeWidth: lineSticker.lineWidth, strokeStyle: lineSticker.strokeStyle)
                 } else if let arrowSticker = currentSticker as? ZLArrowView {
-                     shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: nil)
+                    shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: arrowSticker.strokeStyle)
                 } else if let freehandSticker = currentSticker as? ZLFreehandDrawView {
                      shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: nil)
                 }
@@ -1689,16 +1694,16 @@ open class ZLEditImageViewController: UIViewController {
 
             switch tool {
             case .line:
-                let state = ZLLineState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                let state = ZLLineState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero, strokeStyle: drawLineStyle)
                 sticker = ZLLineView(state: state)
             case .arrow:
-                let state = ZLArrowState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, headSize: arrowHeadSize, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                let state = ZLArrowState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, headSize: arrowHeadSize, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero, strokeStyle: drawLineStyle)
                 sticker = ZLArrowView(state: state)
             case .square:
-                let state = ZLShapeState(shapeType: .rectangle, bounds: relativeBounds, strokeColor: currentLineColor, fillColor: nil, lineWidth: currentLineWidth, cornerRadius: 5, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                let state = ZLShapeState(shapeType: .rectangle, bounds: relativeBounds, strokeColor: currentLineColor, fillColor: nil, lineWidth: currentLineWidth, cornerRadius: 5, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero, strokeStyle: drawLineStyle)
                 sticker = ZLShapeView(state: state)
             case .circle:
-                let state = ZLShapeState(shapeType: .ellipse, bounds: relativeBounds, strokeColor: currentLineColor, fillColor: nil, lineWidth: currentLineWidth, cornerRadius: 0, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero)
+                let state = ZLShapeState(shapeType: .ellipse, bounds: relativeBounds, strokeColor: currentLineColor, fillColor: nil, lineWidth: currentLineWidth, cornerRadius: 0, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero, strokeStyle: drawLineStyle)
                 sticker = ZLShapeView(state: state)
             default:
                 break // Should not happen
@@ -2136,11 +2141,11 @@ open class ZLEditImageViewController: UIViewController {
         currentSticker?.showBorder()
         
         if currentSticker is ZLShapeView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLShapeView).strokeColor, fillColor: (currentSticker as! ZLShapeView).fillColor, strokeWidth: (currentSticker as! ZLShapeView).lineWidth, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLShapeView).strokeColor, fillColor: (currentSticker as! ZLShapeView).fillColor, strokeWidth: (currentSticker as! ZLShapeView).lineWidth, strokeStyle: (currentSticker as! ZLShapeView).strokeStyle)
         } else if currentSticker is ZLLineView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLLineView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLLineView).lineWidth, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLLineView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLLineView).lineWidth, strokeStyle: (currentSticker as! ZLLineView).strokeStyle)
         } else if currentSticker is ZLArrowView {
-            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLArrowView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLArrowView).lineWidth, strokeStyle: nil)
+            shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLArrowView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLArrowView).lineWidth, strokeStyle: (currentSticker as! ZLArrowView).strokeStyle)
         } else if currentSticker is ZLFreehandDrawView {
             shapeStyleSelectorView.setInitialStyle(strokeColor: (currentSticker as! ZLFreehandDrawView).color, fillColor: nil, strokeWidth: (currentSticker as! ZLFreehandDrawView).lineWidth, strokeStyle: nil)
         }

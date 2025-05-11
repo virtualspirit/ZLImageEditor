@@ -40,6 +40,14 @@ class ZLShapeView: ZLBaseStickerView {
         }
     }
     
+    public var strokeStyle: String { // Bisa juga non-optional dengan default
+        didSet {
+            if oldValue != strokeStyle {
+                self.setNeedsDisplay()
+            }
+        }
+    }
+    
     var cornerRadius: CGFloat
 
     // Increased tolerance for shapes, especially if only stroked
@@ -61,7 +69,8 @@ class ZLShapeView: ZLBaseStickerView {
             originFrame: originFrame,
             gesScale: gesScale,
             gesRotation: gesRotation,
-            totalTranslationPoint: totalTranslationPoint
+            totalTranslationPoint: totalTranslationPoint,
+            strokeStyle: strokeStyle
         )
     }
 
@@ -73,6 +82,7 @@ class ZLShapeView: ZLBaseStickerView {
         self.fillColor = state.fillColor
         self.lineWidth = state.lineWidth
         self.cornerRadius = state.cornerRadius
+        self.strokeStyle = state.strokeStyle
         super.init( /* ... base properties from state ... */
              id: state.id,
              originScale: state.originScale,
@@ -114,6 +124,22 @@ class ZLShapeView: ZLBaseStickerView {
         if let fill = fillColor {
             fill.setFill()
             path.fill()
+        }
+        
+        switch self.strokeStyle {
+            case "dashed":
+                let dashPattern: [CGFloat] = [lineWidth * 2, lineWidth * 1.5]
+                path.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+                path.lineCapStyle = .butt
+            case "dotted":
+                // Pola: panjang garis (0 untuk titik), panjang spasi
+                let dotPattern: [CGFloat] = [0, lineWidth * 1.5] // Spasi antar titik
+                path.setLineDash(dotPattern, count: dotPattern.count, phase: 0)
+                path.lineCapStyle = .round // .round penting untuk membuat titik terlihat bundar
+            case "solid":
+                fallthrough // Jatuh ke default jika "Solid"
+            default: // Solid
+                path.lineCapStyle = .round // Ujung membulat untuk garis solid (atau .butt jika lebih disukai)
         }
 
         path.lineWidth = self.lineWidth

@@ -24,6 +24,13 @@ class ZLArrowView: ZLBaseStickerView {
             }
         }
     }
+    public var strokeStyle: String { // Bisa juga non-optional dengan default
+        didSet {
+            if oldValue != strokeStyle {
+                self.setNeedsDisplay()
+            }
+        }
+    }
     var headSize: CGFloat
 
     private let tapTolerance: CGFloat = 0.0
@@ -43,7 +50,8 @@ class ZLArrowView: ZLBaseStickerView {
             originFrame: originFrame,
             gesScale: gesScale,
             gesRotation: gesRotation,
-            totalTranslationPoint: totalTranslationPoint
+            totalTranslationPoint: totalTranslationPoint,
+            strokeStyle: strokeStyle
         )
     }
     
@@ -54,6 +62,7 @@ class ZLArrowView: ZLBaseStickerView {
         self.color = state.color
         self.lineWidth = state.lineWidth
         self.headSize = state.headSize
+        self.strokeStyle = state.strokeStyle
         super.init( /* ... base properties from state ... */
              id: state.id,
              originScale: state.originScale,
@@ -85,8 +94,23 @@ class ZLArrowView: ZLBaseStickerView {
         linePath.move(to: startPoint)
         linePath.addLine(to: endPoint)
         linePath.lineWidth = self.lineWidth
-        linePath.lineCapStyle = .round
         linePath.lineJoinStyle = .round
+
+        switch self.strokeStyle {
+            case "dashed":
+                let dashPattern: [CGFloat] = [lineWidth * 2, lineWidth * 1.5]
+                linePath.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+                linePath.lineCapStyle = .butt
+            case "dotted":
+                // Pola: panjang garis (0 untuk titik), panjang spasi
+                let dotPattern: [CGFloat] = [0, lineWidth * 1.5] // Spasi antar titik
+                linePath.setLineDash(dotPattern, count: dotPattern.count, phase: 0)
+                linePath.lineCapStyle = .round // .round penting untuk membuat titik terlihat bundar
+            case "solid":
+                fallthrough // Jatuh ke default jika "Solid"
+            default: // Solid
+                linePath.lineCapStyle = .round // Ujung membulat untuk garis solid (atau .butt jika lebih disukai)
+        }
 
         // --- Draw Arrow Head ---
         let headPath = UIBezierPath() // Path for the head only

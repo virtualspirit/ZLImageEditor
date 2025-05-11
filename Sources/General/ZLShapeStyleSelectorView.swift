@@ -318,7 +318,7 @@ class ShapeStyleSelectorView: UIView {
         }
 
         // Set Stroke Style
-         if let strokeStyle = strokeStyle, let index = strokeStyles.firstIndex(where: { $0.label == strokeStyle }) {
+        if let strokeStyle = strokeStyle, let index = strokeStyles.firstIndex(where: { $0.value == strokeStyle }) {
              strokeStyleButtonTapped(strokeStyleButtons[index])
          } else if let firstButton = strokeStyleButtons.first { // Default ke gaya pertama (misalnya "Solid")
               strokeStyleButtonTapped(firstButton)
@@ -357,8 +357,6 @@ class ShapeStyleSelectorView: UIView {
         selectedStrokeStyleButton = sender
         
         let styleItem = strokeStyles[sender.tag]
-        delegate?.didSelectStrokeStyle(styleItem.label) // Kirim label gaya ("Solid", "Dashed", "Dotted")
-                                                        // Atau kirim styleItem.value jika Anda ingin mengirim enum
+        delegate?.didSelectStrokeStyle(styleItem.value)
     }
-
 }
