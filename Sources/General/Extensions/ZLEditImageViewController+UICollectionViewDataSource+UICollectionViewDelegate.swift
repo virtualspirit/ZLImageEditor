@@ -93,6 +93,8 @@ extension ZLEditImageViewController: UICollectionViewDataSource, UICollectionVie
         if collectionView == editToolCollectionView {
             let toolType = tools[indexPath.row]
             switch toolType {
+            case .select:
+                selectBtnClick()
             case .shape:
                 shapeBtnClick()
             case .clip:

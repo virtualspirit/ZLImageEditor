@@ -28,10 +28,7 @@ extension ZLEditImageViewController: UIGestureRecognizerDelegate {
                 return true
             }
         } else if gestureRecognizer is UIPanGestureRecognizer {
-            guard let st = selectedTool else {
-                return false
-            }
-            return (st == .draw || st == .mosaic || selectedTool == .line || selectedTool == .arrow || selectedTool == .square || selectedTool == .circle) && !isScrolling
+            return (selectedTool == .draw || selectedTool == .mosaic || selectedTool == .line || selectedTool == .arrow || selectedTool == .square || selectedTool == .circle) && !isScrolling
         }
         
 

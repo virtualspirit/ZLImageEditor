@@ -307,7 +307,7 @@ open class ZLEditImageViewController: UIViewController {
     // The mask layer of mosaicImageLayer
     var mosaicImageLayerMaskLayer: CAShapeLayer?
     
-    var selectedTool: ZLImageEditorConfiguration.EditTool?
+    var selectedTool: ZLImageEditorConfiguration.EditTool = .select
     
     var selectedAdjustTool: ZLImageEditorConfiguration.AdjustTool?
     
@@ -488,13 +488,14 @@ open class ZLEditImageViewController: UIViewController {
         
         super.init(nibName: nil, bundle: nil)
         
-        var toolsShape = ZLImageEditorConfiguration.default().tools.filter { tool in
+        let toolsShape = ZLImageEditorConfiguration.default().tools.filter { tool in
             tool == .draw || tool == .arrow || tool == .circle || tool == .line || tool == .square
         }
         
+        tools.insert(.select, at: 0)
         if (toolsShape.count > 0) {
             shapeOptions = []
-            tools.insert(.shape, at: 0)
+            tools.insert(.shape, at: 1)
             toolsShape.forEach { t in
                 switch t {
                 case .draw:
@@ -940,6 +941,14 @@ open class ZLEditImageViewController: UIViewController {
         }
     }
     
+    func selectBtnClick() {
+        selectedTool = .select
+        
+        setDrawViews(hidden: true)
+        setFilterViews(hidden: true)
+        setAdjustViews(hidden: true)
+    }
+    
     func shapeBtnClick() {
         let isSelected = (selectedTool != .shape || selectedTool != .arrow || selectedTool != .circle || selectedTool != .draw || selectedTool != .line || selectedTool != .square)
        
@@ -958,12 +967,9 @@ open class ZLEditImageViewController: UIViewController {
             case .none:
                 selectedTool = .shape
             }
-        } else {
-            selectedTool = nil
         }
         
-        setLineShapeArrowViews(hidden: false)
-        setDrawViews(hidden: !isSelected)
+        setDrawViews(hidden: false)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
     }
@@ -1005,8 +1011,7 @@ open class ZLEditImageViewController: UIViewController {
             self.adjustSlider?.alpha = 0
         }
         
-        selectedTool = nil
-        setLineShapeArrowViews(hidden: false)
+        selectedTool = .select
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -1031,8 +1036,7 @@ open class ZLEditImageViewController: UIViewController {
         setToolView(show: false)
         imageStickerContainerIsHidden = false
         
-        selectedTool = nil
-        setLineShapeArrowViews(hidden: false)
+        selectedTool = .select
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
@@ -1043,55 +1047,47 @@ open class ZLEditImageViewController: UIViewController {
             self?.addTextStickersView(text, textColor: textColor, font: font, image: image, style: style)
         }
         
-        selectedTool = nil
-        setLineShapeArrowViews(hidden: false)
+        selectedTool = .select
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
     }
     
     func mosaicBtnClick() {
-        let isSelected = selectedTool != .mosaic
-        if isSelected {
-            selectedTool = .mosaic
-        } else {
-            selectedTool = nil
+        if (selectedTool == .mosaic) {
+            return
         }
+
+        selectedTool = .mosaic
         
         generateNewMosaicLayerIfAdjust()
-        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
         setAdjustViews(hidden: true)
     }
     
     func filterBtnClick() {
-        let isSelected = selectedTool != .filter
-        if isSelected {
-            selectedTool = .filter
-        } else {
-            selectedTool = nil
+        if (selectedTool == .filter) {
+            return
         }
-        
-        setLineShapeArrowViews(hidden: false)
+        selectedTool = .filter
+   
         setDrawViews(hidden: true)
-        setFilterViews(hidden: !isSelected)
+        setFilterViews(hidden: false)
         setAdjustViews(hidden: true)
     }
     
     func adjustBtnClick() {
-        let isSelected = selectedTool != .adjust
-        if isSelected {
-            selectedTool = .adjust
-        } else {
-            selectedTool = nil
+        if (selectedTool == .adjust) {
+            return
         }
         
+        selectedTool = .adjust
+     
         generateAdjustImageRef()
-        setLineShapeArrowViews(hidden: false)
         setDrawViews(hidden: true)
         setFilterViews(hidden: true)
-        setAdjustViews(hidden: !isSelected)
+        setAdjustViews(hidden: false)
     }
     
     func setDrawViews(hidden: Bool) {
@@ -1099,11 +1095,6 @@ open class ZLEditImageViewController: UIViewController {
         drawColorCollectionView?.isHidden = hidden
         drawShapeCollectionView?.frame = CGRect(x: 8, y: -10, width: view.zl.width, height: 40.0)
         drawShapeCollectionView?.isHidden = hidden
-    }
-    
-    func setLineShapeArrowViews(hidden: Bool) {
-        drawColorCollectionView?.frame = CGRect(x: 0, y: 30, width: containerView.frame.width, height: drawColViewH)
-        drawColorCollectionView?.isHidden = hidden
     }
     
     func setFilterViews(hidden: Bool) {
@@ -1652,7 +1643,7 @@ open class ZLEditImageViewController: UIViewController {
             mainScrollView.isScrollEnabled = true
             setToolView(show: true, delay: 0.5)
 
-            guard let start = creationStartPoint, start != point, let tool = selectedTool else {
+            guard let start = creationStartPoint, start != point else {
                  creationStartPoint = nil
                  return // Ignore taps or zero-length drags
             }
@@ -1680,7 +1671,7 @@ open class ZLEditImageViewController: UIViewController {
 
             var sticker: ZLBaseStickerView?
 
-            switch tool {
+            switch selectedTool {
             case .line:
                 let state = ZLLineState(startPoint: relativeStart, endPoint: relativeEnd, color: currentLineColor, lineWidth: currentLineWidth, originScale: originScale, originAngle: originAngle, originFrame: originFrame, gesScale: 1, gesRotation: 0, totalTranslationPoint: .zero, strokeStyle: drawLineStyle)
                 sticker = ZLLineView(state: state)
@@ -1869,7 +1860,6 @@ open class ZLEditImageViewController: UIViewController {
         
         let imageSticker = ZLImageStickerView(image: image, originScale: 1 / scale, originAngle: -currentClipStatus.angle, originFrame: originFrame)
         addSticker(imageSticker)
-        view.layoutIfNeeded()
     }
     
     /// Add text sticker
@@ -1899,6 +1889,11 @@ open class ZLEditImageViewController: UIViewController {
         configSticker(sticker)
         editorManager.storeAction(.sticker(oldState: nil, newState: sticker.state))
         selectSticker(sticker: sticker)
+        
+        // handle back to select after adding stiker into image
+        selectBtnClick()
+        editToolCollectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .centeredHorizontally, animated: true)
+        editToolCollectionView.reloadData()
     }
     
     public func removeSticker(id: String?) {

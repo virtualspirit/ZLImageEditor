@@ -210,6 +210,7 @@ public class ZLImageEditorConfiguration: NSObject {
 
 public extension ZLImageEditorConfiguration {
     @objc enum EditTool: Int {
+        case select
         case draw
         case clip
         case imageSticker

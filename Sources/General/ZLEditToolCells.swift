@@ -30,6 +30,9 @@ class ZLEditToolCell: UICollectionViewCell {
     var toolType: ZLImageEditorConfiguration.EditTool = .draw {
         didSet {
             switch toolType {
+            case .select:
+                icon.image = .zl.getImage("zl_select")
+                icon.highlightedImage = .zl.getImage("zl_select_selected")
             case .shape:
                 icon.image = .zl.getImage("zl_shape")
                 icon.highlightedImage = .zl.getImage("zl_shape_selected")
