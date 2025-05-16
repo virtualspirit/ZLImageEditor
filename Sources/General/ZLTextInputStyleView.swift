@@ -11,6 +11,7 @@ protocol ZLTextInputStyleViewDelegate: AnyObject {
     func didSelectTextColor(_ color: UIColor)
     func didSelectFillColor(_ color: UIColor)
     func didSelectFontSize(_ fontSize: CGFloat)
+    func didSelectFontStyle(isBold: Bool, isItalic: Bool)
 }
 
 class ZLTextInputStyleView: UIView {
@@ -32,6 +33,27 @@ class ZLTextInputStyleView: UIView {
     private var fillColorScrollView: UIScrollView!
     private var fillColorButtons: [UIButton] = []
     private var selectedFillColorButton: UIButton?
+    
+    // Font Size
+     private var fontSizeTitleLabel: UILabel!
+     private var fontSizeSlider: UISlider!
+     private var fontSizeValueLabel: UILabel! // Displays the current font size
+
+     // Font Style
+     private var fontStyleTitleLabel: UILabel!
+     private var fontStyleStackView: UIStackView! // Horizontal stack for style buttons
+     private var normalStyleButton: UIButton! // Or keep this implicit
+     private var boldStyleButton: UIButton!
+     private var italicStyleButton: UIButton!
+    
+    // State for new controls
+    private var currentFontSize: CGFloat = ZLImageEditorConfiguration.default().defaultFontSize { // Default initial font size
+        didSet {
+            fontSizeValueLabel?.text = String(format: "%.0f", currentFontSize)
+        }
+    }
+    private var isBoldSelected: Bool = false
+    private var isItalicSelected: Bool = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -74,6 +96,11 @@ class ZLTextInputStyleView: UIView {
         
         setupTextColorSection()
         setupFillColorSection()
+        setupFontSizeSection()
+//        setupFontStyleSection()
+        
+        updateFontSizeSliderAndLabel()
+//        updateFontStyleButtonsAppearance()
     }
     
     private func createTitleLabel(text: String) -> UILabel {
@@ -209,4 +236,153 @@ class ZLTextInputStyleView: UIView {
         
         delegate?.didSelectFillColor(sender.backgroundColor ?? .clear) // .clear akan dihandle sebagai nil
     }
+    
+    private func setupFontSizeSection() {
+            fontSizeTitleLabel = createTitleLabel(text: "Font Size")
+            mainStackView.addArrangedSubview(fontSizeTitleLabel)
+            if #available(iOS 11.0, *) {
+                mainStackView.setCustomSpacing(8, after: fontSizeTitleLabel)
+            }
+
+            let sliderContainer = UIStackView()
+            sliderContainer.axis = .horizontal
+            sliderContainer.spacing = 8
+            sliderContainer.alignment = .center
+
+            fontSizeSlider = UISlider()
+            fontSizeSlider.minimumValue = 12 // Sensible min
+            fontSizeSlider.maximumValue = 72 // Sensible max
+            fontSizeSlider.value = Float(currentFontSize)
+            fontSizeSlider.addTarget(self, action: #selector(fontSizeSliderChanged(_:)), for: .valueChanged)
+            fontSizeSlider.tintColor = .zl.editDoneBtnBgColor // Match theme
+            fontSizeSlider.setContentHuggingPriority(.defaultLow, for: .horizontal)
+            sliderContainer.addArrangedSubview(fontSizeSlider)
+
+            fontSizeValueLabel = UILabel()
+            fontSizeValueLabel.font = .systemFont(ofSize: 12)
+            fontSizeValueLabel.textColor = .white
+            fontSizeValueLabel.textAlignment = .right
+            fontSizeValueLabel.text = String(format: "%.0f", currentFontSize)
+            fontSizeValueLabel.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                fontSizeValueLabel.widthAnchor.constraint(equalToConstant: 30) // Fixed width for the label
+            ])
+            sliderContainer.addArrangedSubview(fontSizeValueLabel)
+
+            mainStackView.addArrangedSubview(sliderContainer)
+        }
+
+        @objc private func fontSizeSliderChanged(_ sender: UISlider) {
+            currentFontSize = CGFloat(sender.value)
+            // fontSizeValueLabel.text is updated by the didSet of currentFontSize
+            delegate?.didSelectFontSize(currentFontSize)
+        }
+
+        private func updateFontSizeSliderAndLabel() {
+            fontSizeSlider?.value = Float(currentFontSize)
+            // fontSizeValueLabel.text is updated by the didSet of currentFontSize
+        }
+    
+    private func setupFontStyleSection() {
+           fontStyleTitleLabel = createTitleLabel(text: "Font Style")
+           mainStackView.addArrangedSubview(fontStyleTitleLabel)
+           if #available(iOS 11.0, *) {
+               mainStackView.setCustomSpacing(8, after: fontStyleTitleLabel)
+           }
+
+           boldStyleButton = createStyleButton(title: "B", action: #selector(boldButtonTapped(_:)))
+           boldStyleButton.titleLabel?.font = .boldSystemFont(ofSize: 15) // Make B bold
+
+           italicStyleButton = createStyleButton(title: "I", action: #selector(italicButtonTapped(_:)))
+           italicStyleButton.titleLabel?.font = .italicSystemFont(ofSize: 15) // Make I italic
+
+           // 'Normal' button could be implicit or explicit.
+           // For explicit, deselecting both Bold and Italic makes it Normal.
+           // Or, add a "Normal" button that deselects Bold and Italic.
+           // Let's go with toggle for Bold and Italic.
+
+           fontStyleStackView = UIStackView(arrangedSubviews: [boldStyleButton, italicStyleButton]) // Add more style buttons here if needed
+           fontStyleStackView.axis = .horizontal
+           fontStyleStackView.spacing = 8
+           fontStyleStackView.distribution = .fillEqually // Or .fillProportionally
+           fontStyleStackView.translatesAutoresizingMaskIntoConstraints = false
+
+           mainStackView.addArrangedSubview(fontStyleStackView)
+           fontStyleStackView.heightAnchor.constraint(equalToConstant: 30).isActive = true
+       }
+
+       private func createStyleButton(title: String, action: Selector) -> UIButton {
+           let button = UIButton(type: .custom) // Use custom for better control over selected state
+           button.setTitle(title, for: .normal)
+           button.setTitleColor(UIColor.white.withAlphaComponent(0.7), for: .normal)
+           button.setTitleColor(.zl.editDoneBtnBgColor, for: .selected) // Highlighted text color
+           button.titleLabel?.font = .systemFont(ofSize: 14)
+           button.backgroundColor = UIColor.clear // Transparent background initially
+           button.layer.cornerRadius = 5
+           button.layer.borderWidth = 1
+           button.layer.borderColor = UIColor.white.withAlphaComponent(0.7).cgColor // Border for unselected
+           button.addTarget(self, action: action, for: .touchUpInside)
+           button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+           return button
+       }
+
+       @objc private func boldButtonTapped(_ sender: UIButton) {
+           isBoldSelected.toggle()
+           updateFontStyleButtonsAppearance()
+           delegate?.didSelectFontStyle(isBold: isBoldSelected, isItalic: isItalicSelected)
+       }
+
+       @objc private func italicButtonTapped(_ sender: UIButton) {
+           isItalicSelected.toggle()
+           updateFontStyleButtonsAppearance()
+           delegate?.didSelectFontStyle(isBold: isBoldSelected, isItalic: isItalicSelected)
+       }
+
+       private func updateFontStyleButtonsAppearance() {
+           // Bold Button
+           boldStyleButton?.isSelected = isBoldSelected
+           boldStyleButton?.backgroundColor = isBoldSelected ? .zl.editDoneBtnBgColor.withAlphaComponent(0.2) : .clear
+           boldStyleButton?.layer.borderColor = isBoldSelected ? UIColor.zl.editDoneBtnBgColor.cgColor : UIColor.white.withAlphaComponent(0.7).cgColor
+
+           // Italic Button
+           italicStyleButton?.isSelected = isItalicSelected
+           italicStyleButton?.backgroundColor = isItalicSelected ? .zl.editDoneBtnBgColor.withAlphaComponent(0.2) : .clear
+           italicStyleButton?.layer.borderColor = isItalicSelected ? UIColor.zl.editDoneBtnBgColor.cgColor : UIColor.white.withAlphaComponent(0.7).cgColor
+       }
+    
+    func setInitialStyle(
+            textColor: UIColor?,
+            fillColor: UIColor?,
+            fontSize: CGFloat?,
+            isBold: Bool?,
+            isItalic: Bool?
+        ) {
+            // Set Text Color
+            if let tc = textColor, let index = textColors.firstIndex(of: tc) {
+                textColorButtonTapped(textColorButtons[index])
+            } else if let firstButton = textColorButtons.first {
+                textColorButtonTapped(firstButton)
+            }
+
+            // Set Fill Color
+            let targetFillColor = fillColor ?? .clear
+            if let index = fillColors.firstIndex(of: targetFillColor) {
+                fillColorButtonTapped(fillColorButtons[index])
+            } else if let firstButton = fillColorButtons.first {
+                fillColorButtonTapped(firstButton)
+            }
+
+            // Set Font Size
+            if let fs = fontSize {
+                self.currentFontSize = fs
+            } else {
+                self.currentFontSize = ZLImageEditorConfiguration.default().defaultFontSize // Fallback
+            }
+            updateFontSizeSliderAndLabel() // Update slider and label from currentFontSize
+
+            // Set Font Style
+            self.isBoldSelected = isBold ?? false
+            self.isItalicSelected = isItalic ?? false
+            updateFontStyleButtonsAppearance()
+        }
 }

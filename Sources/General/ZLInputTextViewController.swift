@@ -27,7 +27,7 @@
 import UIKit
 
 class ZLInputTextViewController: UIViewController {
-    private static let toolViewHeight: CGFloat = 150
+    private static let toolViewHeight: CGFloat = 250
     
     private let image: UIImage?
     
@@ -48,6 +48,10 @@ class ZLInputTextViewController: UIViewController {
             refreshTextViewUI()
         }
     }
+    
+    private var currentIsBold: Bool = false
+    private var currentIsItalic: Bool = false
+    private var baseFontName: String = ZLImageEditorConfiguration.default().textStickerDefaultFont?.fontName ?? UIFont.systemFont(ofSize: 1).fontName
         
     private lazy var bgImageView: UIImageView = {
         let view = UIImageView(image: image?.zl.blurImage(level: 4))
@@ -255,6 +259,13 @@ class ZLInputTextViewController: UIViewController {
     }
     
     func setupUI() {
+        let initialFont = self.font
+         let initialDescriptor = initialFont.fontDescriptor
+         let initialTraits = initialDescriptor.symbolicTraits
+         currentIsBold = initialTraits.contains(.traitBold)
+         currentIsItalic = initialTraits.contains(.traitItalic)
+        
+        
         view.backgroundColor = .black
         
         view.addSubview(bgImageView)
@@ -267,6 +278,13 @@ class ZLInputTextViewController: UIViewController {
         
         textView.tintColor = textColor
                 
+        textInputStyleView.setInitialStyle(
+            textColor: self.textColor, // Existing property
+            fillColor: self.fillColor, // Existing property (from previous file)
+            fontSize: self.fontSize,
+            isBold: currentIsBold,
+            isItalic: currentIsItalic
+        )
         textInputStyleView.delegate = self
         textInputStyleView.translatesAutoresizingMaskIntoConstraints = false
         toolView.addSubview(textInputStyleView)
@@ -282,6 +300,56 @@ class ZLInputTextViewController: UIViewController {
         
         refreshTextViewUI()
     }
+    
+    private func applyFontChanges() {
+        var newFontDescriptor = UIFontDescriptor(name: baseFontName, size: self.fontSize)
+        var symbolicTraits = newFontDescriptor.symbolicTraits
+        
+        if currentIsBold {
+            symbolicTraits.insert(.traitBold)
+        } else {
+            symbolicTraits.remove(.traitBold)
+        }
+        
+        if currentIsItalic {
+            symbolicTraits.insert(.traitItalic)
+        } else {
+            symbolicTraits.remove(.traitItalic)
+        }
+        
+        if let finalDescriptor = newFontDescriptor.withSymbolicTraits(symbolicTraits) {
+            self.font = UIFont(descriptor: finalDescriptor, size: self.fontSize)
+        } else {
+            // Fallback if descriptor with traits fails
+            // Try to create a system font with traits
+            var systemFont = UIFont.systemFont(ofSize: self.fontSize)
+            if currentIsBold && currentIsItalic {
+                 systemFont = UIFont.systemFont(ofSize: self.fontSize, weight: .bold)
+                 if let descriptor = systemFont.fontDescriptor.withSymbolicTraits(.traitItalic) {
+                     self.font = UIFont(descriptor: descriptor, size: self.fontSize)
+                 } else {
+                     self.font = systemFont // At least bold
+                 }
+            } else if currentIsBold {
+                self.font = UIFont.systemFont(ofSize: self.fontSize, weight: .bold)
+            } else if currentIsItalic {
+                 if let descriptor = systemFont.fontDescriptor.withSymbolicTraits(.traitItalic) {
+                     self.font = UIFont(descriptor: descriptor, size: self.fontSize)
+                 } else {
+                     self.font = systemFont // Plain system
+                 }
+            } else {
+                self.font = systemFont // Plain system
+            }
+        }
+        
+        textView.font = self.font
+        // If text layout might change significantly (e.g., due to bold/italic width changes)
+        // you might need to call drawTextBackground() or similar layout-dependent methods.
+        // For now, just updating font.
+        drawTextBackground() // Re-draw background as text metrics change
+    }
+
     
     private func refreshTextViewUI() {
         drawTextBackground()
@@ -534,17 +602,26 @@ extension ZLInputTextViewController: NSLayoutManagerDelegate {
 }
 
 extension ZLInputTextViewController: ZLTextInputStyleViewDelegate {
+    func didSelectFontStyle(isBold: Bool, isItalic: Bool) {
+        self.currentIsBold = isBold
+         self.currentIsItalic = isItalic
+         applyFontChanges()
+    }
+    
     func didSelectTextColor(_ color: UIColor) {
         self.textColor = color
         self.textView.tintColor = color
+        refreshTextViewUI()
     }
     
     func didSelectFillColor(_ color: UIColor) {
         self.fillColor = color
+        refreshTextViewUI()
     }
     
     func didSelectFontSize(_ fontSize: CGFloat) {
         self.fontSize = fontSize
+        applyFontChanges()
     }
     
     
