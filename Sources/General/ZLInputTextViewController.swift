@@ -27,22 +27,28 @@
 import UIKit
 
 class ZLInputTextViewController: UIViewController {
-    private static let toolViewHeight: CGFloat = 70
+    private static let toolViewHeight: CGFloat = 150
     
     private let image: UIImage?
     
     private var text: String
-
-    private var font: UIFont = .boldSystemFont(ofSize: ZLTextStickerView.fontSize)
     
-    private var currentColor: UIColor {
+    private var fontSize: CGFloat = ZLImageEditorConfiguration().defaultFontSize
+
+    private var font: UIFont = .boldSystemFont(ofSize: ZLImageEditorConfiguration().defaultFontSize)
+    
+    private var textColor: UIColor {
         didSet {
             refreshTextViewUI()
         }
     }
     
-    private var textStyle: ZLInputTextStyle
-    
+    private var fillColor: UIColor {
+        didSet {
+            refreshTextViewUI()
+        }
+    }
+        
     private lazy var bgImageView: UIImageView = {
         let view = UIImageView(image: image?.zl.blurImage(level: 4))
         view.contentMode = .scaleAspectFit
@@ -79,11 +85,11 @@ class ZLInputTextViewController: UIViewController {
     private lazy var textView: UITextView = {
         let textView = UITextView()
         textView.keyboardAppearance = .dark
-        textView.returnKeyType = .done
+        textView.returnKeyType = ZLImageEditorConfiguration.default().textStickerCanLineBreak ? .continue : .default
         textView.delegate = self
         textView.backgroundColor = .clear
-        textView.tintColor = .zl.editDoneBtnBgColor
-        textView.textColor = currentColor
+        textView.tintColor = textColor
+        textView.textColor = textColor
         textView.text = text
         textView.font = font
         textView.textContainerInset = UIEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
@@ -92,20 +98,9 @@ class ZLInputTextViewController: UIViewController {
         return textView
     }()
     
-    private lazy var toolView = UIView(frame: CGRect(
-        x: 0,
-        y: view.zl.height - Self.toolViewHeight,
-        width: view.zl.width,
-        height: Self.toolViewHeight
-    ))
+    private lazy var toolView = UIView()
     
-    private lazy var textStyleBtn: UIButton = {
-        let btn = UIButton(type: .custom)
-        btn.addTarget(self, action: #selector(textStyleBtnClick), for: .touchUpInside)
-        return btn
-    }()
-    
-    private lazy var collectionView: UICollectionView = {
+    private lazy var textColorCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: 36, height: 36)
         layout.minimumLineSpacing = 0
@@ -126,6 +121,29 @@ class ZLInputTextViewController: UIViewController {
         return collectionView
     }()
     
+    private lazy var fillColorCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: 36, height: 36)
+        layout.minimumLineSpacing = 0
+        layout.minimumInteritemSpacing = 0
+        layout.scrollDirection = .horizontal
+        let inset = (Self.toolViewHeight - layout.itemSize.height) / 2
+        layout.sectionInset = UIEdgeInsets(top: inset, left: 0, bottom: inset, right: 0)
+        
+        let collectionView = UICollectionView(
+            frame: .zero,
+            collectionViewLayout: layout
+        )
+        collectionView.backgroundColor = .clear
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        ZLDrawColorCell.zl.register(collectionView)
+        
+        return collectionView
+    }()
+    
+    private var textInputStyleView: ZLTextInputStyleView = ZLTextInputStyleView()
+    
     private var shouldLayout = true
     
     private lazy var textLayer = CAShapeLayer()
@@ -135,7 +153,7 @@ class ZLInputTextViewController: UIViewController {
     private let maxTextCount = 100
     
     /// text, textColor, font, image, style
-    var endInput: ((String, UIColor, UIFont, UIImage?, ZLInputTextStyle) -> Void)?
+    var endInput: ((String, UIColor, UIFont, UIImage?, UIColor, CGFloat) -> Void)?
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         deviceIsiPhone() ? .portrait : .all
@@ -145,22 +163,30 @@ class ZLInputTextViewController: UIViewController {
         return true
     }
     
-    init(image: UIImage?, text: String? = nil, font: UIFont? = nil, textColor: UIColor? = nil, style: ZLInputTextStyle = .normal) {
+    init(image: UIImage?, text: String? = nil, font: UIFont? = nil, textColor: UIColor? = nil, fillColor: UIColor? = nil, fontSize: CGFloat? = nil) {
         self.image = image
         self.text = text ?? ""
+        if let fontSize = fontSize {
+            self.fontSize = fontSize
+        }
         if let font = font {
-            self.font = font.withSize(ZLTextStickerView.fontSize)
+            self.font = font.withSize(self.fontSize)
         }
         if let textColor = textColor {
-            currentColor = textColor
+            self.textColor = textColor
         } else {
             if !ZLImageEditorConfiguration.default().textStickerTextColors.contains(ZLImageEditorConfiguration.default().textStickerDefaultTextColor) {
-                currentColor = ZLImageEditorConfiguration.default().textStickerTextColors.first!
+                self.textColor = ZLImageEditorConfiguration.default().textStickerTextColors.first!
             } else {
-                currentColor = ZLImageEditorConfiguration.default().textStickerDefaultTextColor
+                self.textColor = ZLImageEditorConfiguration.default().textStickerDefaultTextColor
             }
         }
-        self.textStyle = style
+        if let fillColor = fillColor {
+            self.fillColor = fillColor
+        } else {
+            self.fillColor = .clear
+        }
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -210,22 +236,16 @@ class ZLInputTextViewController: UIViewController {
         doneBtn.frame = CGRect(x: view.zl.width - 20 - doneBtnW, y: btnY, width: doneBtnW, height: ZLImageEditorLayout.bottomToolBtnH)
         
         textView.frame = CGRect(x: 10, y: doneBtn.zl.bottom + 30, width: view.zl.width - 20, height: 200)
-        
-        textStyleBtn.frame = CGRect(
-            x: 12,
-            y: 20,
-            width: 30,
-            height: 30
-        )
-        collectionView.frame = CGRect(
-            x: textStyleBtn.zl.right + 5,
+    
+        textColorCollectionView.frame = CGRect(
+            x: 0,
             y: 0,
-            width: view.zl.width - textStyleBtn.zl.right - 5 - 24,
+            width: view.zl.width,
             height: Self.toolViewHeight
         )
         
-        if let index = ZLImageEditorConfiguration.default().textStickerTextColors.firstIndex(where: { $0 == self.currentColor }) {
-            collectionView.scrollToItem(at: IndexPath(row: index, section: 0), at: .centeredHorizontally, animated: false)
+        if let index = ZLImageEditorConfiguration.default().textStickerTextColors.firstIndex(where: { $0 == self.textColor }) {
+            textColorCollectionView.scrollToItem(at: IndexPath(row: index, section: 0), at: .centeredHorizontally, animated: false)
         }
     }
     
@@ -244,8 +264,19 @@ class ZLInputTextViewController: UIViewController {
         view.addSubview(doneBtn)
         view.addSubview(textView)
         view.addSubview(toolView)
-        toolView.addSubview(textStyleBtn)
-        toolView.addSubview(collectionView)
+        
+        textView.tintColor = textColor
+                
+        textInputStyleView.delegate = self
+        textInputStyleView.translatesAutoresizingMaskIntoConstraints = false
+        toolView.addSubview(textInputStyleView)
+        
+        NSLayoutConstraint.activate([
+            textInputStyleView.leadingAnchor.constraint(equalTo: toolView.leadingAnchor, constant: 0),
+            textInputStyleView.trailingAnchor.constraint(equalTo: toolView.trailingAnchor, constant: 0),
+            textInputStyleView.topAnchor.constraint(equalTo: toolView.topAnchor, constant: 0),
+            textInputStyleView.bottomAnchor.constraint(equalTo: toolView.bottomAnchor, constant: 0),
+        ])
         
         textView.textAlignment = .left
         
@@ -253,35 +284,10 @@ class ZLInputTextViewController: UIViewController {
     }
     
     private func refreshTextViewUI() {
-        textStyleBtn.setImage(textStyle.btnImage, for: .normal)
-        textStyleBtn.setImage(textStyle.btnImage, for: .highlighted)
-        
         drawTextBackground()
-        
-        guard textStyle == .bg else {
-            textView.textColor = currentColor
-            return
-        }
-        
-        if currentColor == .white {
-            textView.textColor = .black
-        } else if currentColor == .black {
-            textView.textColor = .white
-        } else {
-            textView.textColor = .white
-        }
+        textView.textColor = self.textColor
     }
-    
-    @objc private func textStyleBtnClick() {
-        if textStyle == .normal {
-            textStyle = .bg
-        } else {
-            textStyle = .normal
-        }
-        
-        refreshTextViewUI()
-    }
-    
+
     @objc func cancelBtnClick() {
         dismiss(animated: true, completion: nil)
     }
@@ -297,17 +303,14 @@ class ZLInputTextViewController: UIViewController {
                 if NSStringFromClass(subview.classForCoder) == "_UITextContainerView" {
                     let size = textView.sizeThatFits(subview.frame.size)
                     image = UIGraphicsImageRenderer.zl.renderImage(size: size) { context in
-                        if textStyle == .bg {
-                            textLayer.render(in: context)
-                        }
-                        
+                        textLayer.render(in: context)
                         subview.layer.render(in: context)
                     }
                 }
             }
         }
         
-        endInput?(textView.text, currentColor, font, image, textStyle)
+        endInput?(textView.text, textColor, font, image, fillColor, fontSize)
         dismiss(animated: true, completion: nil)
     }
     
@@ -362,7 +365,7 @@ extension ZLInputTextViewController: UICollectionViewDelegate, UICollectionViewD
         
         let c = ZLImageEditorConfiguration.default().textStickerTextColors[indexPath.row]
         cell.color = c
-        if c == currentColor {
+        if c == textColor {
             cell.bgWhiteView.layer.transform = CATransform3DMakeScale(1.33, 1.33, 1)
             cell.colorView.layer.transform = CATransform3DMakeScale(1.2, 1.2, 1)
         } else {
@@ -374,7 +377,7 @@ extension ZLInputTextViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        currentColor = ZLImageEditorConfiguration.default().textStickerTextColors[indexPath.row]
+        textColor = ZLImageEditorConfiguration.default().textStickerTextColors[indexPath.row]
         collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         collectionView.reloadData()
     }
@@ -384,7 +387,7 @@ extension ZLInputTextViewController: UICollectionViewDelegate, UICollectionViewD
 
 extension ZLInputTextViewController {
     private func drawTextBackground() {
-        guard textStyle == .bg, !textView.text.isEmpty else {
+        guard !textView.text.isEmpty else {
             textLayer.removeFromSuperlayer()
             return
         }
@@ -428,7 +431,7 @@ extension ZLInputTextViewController {
         }
         
         textLayer.path = path.cgPath
-        textLayer.fillColor = currentColor.cgColor
+        textLayer.fillColor = fillColor.cgColor
         if textLayer.superlayer == nil {
             textView.layer.insertSublayer(textLayer, at: 0)
         }
@@ -530,17 +533,19 @@ extension ZLInputTextViewController: NSLayoutManagerDelegate {
     }
 }
 
-public enum ZLInputTextStyle {
-    case normal
-    case bg
-    
-    fileprivate var btnImage: UIImage? {
-        switch self {
-        case .normal:
-            return .zl.getImage("zl_input_font")
-        case .bg:
-            return .zl.getImage("zl_input_font_bg")
-        }
+extension ZLInputTextViewController: ZLTextInputStyleViewDelegate {
+    func didSelectTextColor(_ color: UIColor) {
+        self.textColor = color
+        self.textView.tintColor = color
     }
+    
+    func didSelectFillColor(_ color: UIColor) {
+        self.fillColor = color
+    }
+    
+    func didSelectFontSize(_ fontSize: CGFloat) {
+        self.fontSize = fontSize
+    }
+    
+    
 }
-

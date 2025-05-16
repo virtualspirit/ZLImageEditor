@@ -84,7 +84,7 @@ class ShapeStyleSelectorView: UIView {
     private func setupView() {
         self.backgroundColor = UIColor.black.withAlphaComponent(0.75) // Latar belakang semi-transparan gelap
         self.layer.cornerRadius = 12
-        self.layer.masksToBounds = true // Jika menggunakan blur effect, ini mungkin perlu false
+        self.layer.masksToBounds = false // Jika menggunakan blur effect, ini mungkin perlu false
 
          let blurEffect = UIBlurEffect(style: .dark)
          let blurView = UIVisualEffectView(effect: blurEffect)

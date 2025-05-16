@@ -609,10 +609,7 @@ open class ZLEditImageViewController: UIViewController {
             shapeStyleSelectorView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
             shapeStyleSelectorView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
             shapeStyleSelectorView.topAnchor.constraint(equalTo: topShadowView.bottomAnchor, constant: 0),
-//            shapeStyleSelectorView.heightAnchor.constraint(equalToConstant: 250)
         ])
-
-//        shapeStyleSelectorView.isHidden = true // Default hidden
         
         drawColorCollectionView?.frame = CGRect(x: 11, y: 30, width: view.zl.width, height: drawColViewH)
         
@@ -899,8 +896,8 @@ open class ZLEditImageViewController: UIViewController {
             }
 
             ZLImageEditorConfiguration.default().fontChooserContainerView?.selectFontBlock = { [weak self] font in
-                self?.showInputTextVC(font: font, completion: { [weak self] text, textColor, font, image, style in
-                    self?.addTextStickersView(text, textColor: textColor, font: font, image: image, style: style)
+                self?.showInputTextVC(font: font, completion: { [weak self] text, textColor, font, image, fillColor, fontSize in
+                    self?.addTextStickersView(text, textColor: textColor, font: font, image: image, fillColor: fillColor, fontSize: fontSize)
                 })
             }
         }
@@ -1043,8 +1040,8 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     func textStickerBtnClick() {
-        showInputTextVC(font: ZLImageEditorConfiguration.default().textStickerDefaultFont) { [weak self] text, textColor, font, image, style in
-            self?.addTextStickersView(text, textColor: textColor, font: font, image: image, style: style)
+        showInputTextVC(font: ZLImageEditorConfiguration.default().textStickerDefaultFont) { [weak self] text, textColor, font, image, fillColor, fontSize  in
+            self?.addTextStickersView(text, textColor: textColor, font: font, image: image, fillColor: fillColor, fontSize: fontSize)
         }
         
         selectedTool = .select
@@ -1252,8 +1249,9 @@ open class ZLEditImageViewController: UIViewController {
                duplicateState = ZLTextStickerState(
                    text: textState.text,
                    textColor: textState.textColor,
+                   fillColor: textState.fillColor,
                    font: textState.font,
-                   style: textState.style,
+                   fontSize: textState.fontSize,
                    image: textState.image, // This is the rendered text image
                    originScale: textState.originScale,
                    originAngle: textState.originAngle,
@@ -1810,7 +1808,7 @@ open class ZLEditImageViewController: UIViewController {
         toolViewStateTimer = nil
     }
     
-    public func showInputTextVC(_ text: String? = nil, textColor: UIColor? = nil, font: UIFont? = nil, style: ZLInputTextStyle = .normal, completion: @escaping (String, UIColor, UIFont, UIImage?, ZLInputTextStyle) -> Void) {
+    public func showInputTextVC(_ text: String? = nil, textColor: UIColor? = nil, font: UIFont? = nil, fillColor: UIColor? = nil, fontSize: CGFloat? = nil, completion: @escaping (String, UIColor, UIFont, UIImage?, UIColor, CGFloat) -> Void) {
         var bgImage: UIImage?
         autoreleasepool {
             // Calculate image displayed frame on the screen.
@@ -1829,10 +1827,10 @@ open class ZLEditImageViewController: UIViewController {
                 .zl.clipImage(angle: 0, editRect: r, isCircle: isCircle)
         }
         
-        let vc = ZLInputTextViewController(image: bgImage, text: text, font: font, textColor: textColor, style: style)
+        let vc = ZLInputTextViewController(image: bgImage, text: text, font: font, textColor: textColor, fillColor: fillColor, fontSize: fontSize )
         
-        vc.endInput = { text, textColor, font, image, style in
-            completion(text, textColor, font, image, style)
+        vc.endInput = { text, textColor, font, image, fillColor, fontSize in
+            completion(text, textColor, font, image, fillColor, fontSize)
         }
         
         vc.modalPresentationStyle = .fullScreen
@@ -1863,7 +1861,7 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     /// Add text sticker
-    func addTextStickersView(_ text: String, textColor: UIColor, font: UIFont, image: UIImage?, style: ZLInputTextStyle) {
+    func addTextStickersView(_ text: String, textColor: UIColor, font: UIFont, image: UIImage?, fillColor: UIColor, fontSize: CGFloat) {
         guard !text.isEmpty, let image = image else { return }
         
         let scale = mainScrollView.zoomScale
@@ -1873,8 +1871,9 @@ open class ZLEditImageViewController: UIViewController {
         let textSticker = ZLTextStickerView(
             text: text,
             textColor: textColor,
+            fillColor: fillColor,
             font: font,
-            style: style,
+            fontSize: fontSize,
             image: image,
             originScale: 1 / scale,
             originAngle: -currentClipStatus.angle,

@@ -57,20 +57,21 @@ extension ZLEditImageViewController: ZLStickerViewDelegate {
     }
     
     func sticker(_ textSticker: ZLTextStickerView, editText text: String) {
-        showInputTextVC(text, textColor: textSticker.textColor, font: textSticker.font, style: textSticker.style) { text, textColor, font, image, style in
+        showInputTextVC(text, textColor: textSticker.textColor, font: textSticker.font, fillColor: textSticker.fillColor, fontSize: textSticker.fontSize) { text, textColor, font, image, fillColor, fontSize  in
             guard let image = image, !text.isEmpty else {
                 textSticker.remove()
                 return
             }
             
-            guard textSticker.text != text || textSticker.textColor != textColor || textSticker.style != style || textSticker.font != font else {
+            guard textSticker.text != text || textSticker.textColor != textColor || textSticker.font != font else {
                 return
             }
             textSticker.text = text
             textSticker.textColor = textColor
-            textSticker.style = style
+            textSticker.fillColor = fillColor
             textSticker.image = image
             textSticker.font = font
+            textSticker.fontSize = fontSize
             let newSize = ZLTextStickerView.calculateSize(image: image)
             textSticker.changeSize(to: newSize)
         }

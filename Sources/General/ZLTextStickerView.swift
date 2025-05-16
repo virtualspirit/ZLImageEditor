@@ -27,7 +27,6 @@
 import UIKit
 
 class ZLTextStickerView: ZLBaseStickerView {
-    static let fontSize: CGFloat = 32
     
     private static let edgeInset: CGFloat = 10
     
@@ -41,11 +40,13 @@ class ZLTextStickerView: ZLBaseStickerView {
     public var text: String
     
     public var textColor: UIColor
+    
+    public var fillColor: UIColor
+    
+    public var fontSize: CGFloat = ZLImageEditorConfiguration().defaultFontSize
 
     public var font: UIFont?
-    
-    public var style: ZLInputTextStyle
-    
+        
     var image: UIImage {
         didSet {
             imageView.image = image
@@ -58,8 +59,9 @@ class ZLTextStickerView: ZLBaseStickerView {
             id: id,
             text: text,
             textColor: textColor,
+            fillColor: fillColor,
             font: font,
-            style: style,
+            fontSize: fontSize,
             image: image,
             originScale: originScale,
             originAngle: originAngle,
@@ -79,8 +81,8 @@ class ZLTextStickerView: ZLBaseStickerView {
             id: state.id,
             text: state.text,
             textColor: state.textColor,
+            fillColor: state.fillColor,
             font: state.font,
-            style: state.style,
             image: state.image,
             originScale: state.originScale,
             originAngle: state.originAngle,
@@ -96,8 +98,9 @@ class ZLTextStickerView: ZLBaseStickerView {
         id: String = UUID().uuidString,
         text: String,
         textColor: UIColor,
+        fillColor: UIColor,
         font: UIFont? = nil,
-        style: ZLInputTextStyle,
+        fontSize: CGFloat = 32,
         image: UIImage,
         originScale: CGFloat,
         originAngle: CGFloat,
@@ -109,8 +112,9 @@ class ZLTextStickerView: ZLBaseStickerView {
     ) {
         self.text = text
         self.textColor = textColor
+        self.fillColor = fillColor
         self.font = font
-        self.style = style
+        self.fontSize = fontSize
         self.image = image
         super.init(
             id: id,
