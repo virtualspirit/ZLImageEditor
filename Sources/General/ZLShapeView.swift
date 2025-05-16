@@ -10,9 +10,44 @@ import UIKit
 class ZLShapeView: ZLBaseStickerView {
     var shapeType: ZLImageEditorConfiguration.ShapeType
     var shapeBounds: CGRect // Relative bounds within the sticker's frame
-    var strokeColor: UIColor
-    var fillColor: UIColor?
-    var lineWidth: CGFloat
+    public var strokeColor: UIColor {
+        didSet {
+            if oldValue != strokeColor {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    
+    public var fillColor: UIColor? {
+        didSet {
+            let originalOldValue = oldValue
+
+            if fillColor == UIColor.clear {
+                self.fillColor = nil
+            }
+
+            if originalOldValue != self.fillColor {
+                self.setNeedsDisplay()
+            }
+        }
+    }
+    
+    public var lineWidth: CGFloat {
+        didSet {
+            if oldValue != lineWidth {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    
+    public var strokeStyle: String { // Bisa juga non-optional dengan default
+        didSet {
+            if oldValue != strokeStyle {
+                self.setNeedsDisplay()
+            }
+        }
+    }
+    
     var cornerRadius: CGFloat
 
     // Increased tolerance for shapes, especially if only stroked
@@ -34,7 +69,8 @@ class ZLShapeView: ZLBaseStickerView {
             originFrame: originFrame,
             gesScale: gesScale,
             gesRotation: gesRotation,
-            totalTranslationPoint: totalTranslationPoint
+            totalTranslationPoint: totalTranslationPoint,
+            strokeStyle: strokeStyle
         )
     }
 
@@ -46,6 +82,7 @@ class ZLShapeView: ZLBaseStickerView {
         self.fillColor = state.fillColor
         self.lineWidth = state.lineWidth
         self.cornerRadius = state.cornerRadius
+        self.strokeStyle = state.strokeStyle
         super.init( /* ... base properties from state ... */
              id: state.id,
              originScale: state.originScale,
@@ -54,11 +91,11 @@ class ZLShapeView: ZLBaseStickerView {
              gesScale: state.gesScale,
              gesRotation: state.gesRotation,
              totalTranslationPoint: state.totalTranslationPoint,
-             showBorder: false
+             showBorder: true
         )
         self.backgroundColor = .clear
         self.contentMode = .redraw
-        self.layer.borderWidth = 0 // Ensure no visual border
+        self.layer.borderWidth = 1 // Ensure no visual border
     }
 
     required init?(coder: NSCoder) {
@@ -87,6 +124,22 @@ class ZLShapeView: ZLBaseStickerView {
         if let fill = fillColor {
             fill.setFill()
             path.fill()
+        }
+        
+        switch self.strokeStyle {
+            case "dashed":
+                let dashPattern: [CGFloat] = [lineWidth * 2, lineWidth * 1.5]
+                path.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+                path.lineCapStyle = .butt
+            case "dotted":
+                // Pola: panjang garis (0 untuk titik), panjang spasi
+                let dotPattern: [CGFloat] = [0, lineWidth * 1.5] // Spasi antar titik
+                path.setLineDash(dotPattern, count: dotPattern.count, phase: 0)
+                path.lineCapStyle = .round // .round penting untuk membuat titik terlihat bundar
+            case "solid":
+                fallthrough // Jatuh ke default jika "Solid"
+            default: // Solid
+                path.lineCapStyle = .round // Ujung membulat untuk garis solid (atau .butt jika lebih disukai)
         }
 
         path.lineWidth = self.lineWidth
@@ -122,9 +175,8 @@ class ZLShapeView: ZLBaseStickerView {
              if path.contains(point) { return self }
 
             // Option 2: Check with tolerance using stroked path (if needed near edge)
-            // let hitPathForFill = path.cgPath.copy(strokingWithWidth: tapTolerance, lineCap: .round, lineJoin: .round, miterLimit: 0)
-            // if hitPathForFill.contains(point) { return self }
-
+             let hitPathForFill = path.cgPath.copy(strokingWithWidth: tapTolerance, lineCap: .round, lineJoin: .round, miterLimit: 0)
+             if hitPathForFill.contains(point) { return self }
         } else {
             // Only stroked shape
             let hitWidth = max(self.lineWidth, 10) + tapTolerance

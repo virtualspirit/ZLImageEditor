@@ -10,8 +10,27 @@ import UIKit
 class ZLLineView: ZLBaseStickerView {
     var startPoint: CGPoint // Relative to bounds
     var endPoint: CGPoint   // Relative to bounds
-    var color: UIColor
-    var lineWidth: CGFloat
+    public var color: UIColor {
+        didSet {
+            if oldValue != color {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    public var lineWidth: CGFloat {
+        didSet {
+            if oldValue != lineWidth {
+                self.setNeedsDisplay() // Trigger redraw when color changes
+            }
+        }
+    }
+    public var strokeStyle: String { // Bisa juga non-optional dengan default
+        didSet {
+            if oldValue != strokeStyle {
+                self.setNeedsDisplay()
+            }
+        }
+    }
 
     // Define a tolerance for tapping near the line
     private let tapTolerance: CGFloat = 0.0 // Adjust as needed (larger makes it easier to tap)
@@ -30,7 +49,8 @@ class ZLLineView: ZLBaseStickerView {
             originFrame: originFrame,
             gesScale: gesScale,
             gesRotation: gesRotation,
-            totalTranslationPoint: totalTranslationPoint
+            totalTranslationPoint: totalTranslationPoint,
+            strokeStyle: strokeStyle
         )
     }
 
@@ -39,6 +59,7 @@ class ZLLineView: ZLBaseStickerView {
         self.endPoint = state.endPoint
         self.color = state.color
         self.lineWidth = state.lineWidth
+        self.strokeStyle = state.strokeStyle
         super.init(
             id: state.id,
             originScale: state.originScale,
@@ -47,12 +68,11 @@ class ZLLineView: ZLBaseStickerView {
             gesScale: state.gesScale,
             gesRotation: state.gesRotation,
             totalTranslationPoint: state.totalTranslationPoint,
-            showBorder: false
-            // showBorder: state.gesScale == 1 && state.gesRotation == 0 // Show border initially only if not transformed
+            showBorder: true
         )
         self.backgroundColor = .clear
         self.contentMode = .redraw
-        self.layer.borderWidth = 0 // Ensure no visual border
+        self.layer.borderWidth = 1// Ensure no visual border
     }
 
      required init?(coder: NSCoder) {
@@ -70,9 +90,24 @@ class ZLLineView: ZLBaseStickerView {
         path.addLine(to: endPoint)
 
         path.lineWidth = self.lineWidth
-        path.lineCapStyle = .round
         path.lineJoinStyle = .round
-
+        
+        switch self.strokeStyle {
+            case "dashed":
+            let dashPattern: [CGFloat] = [lineWidth * 2, lineWidth * 1.5]
+                path.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+                path.lineCapStyle = .butt
+            case "dotted":
+                // Pola: panjang garis (0 untuk titik), panjang spasi
+                let dotPattern: [CGFloat] = [0, lineWidth * 1.5] // Spasi antar titik
+                path.setLineDash(dotPattern, count: dotPattern.count, phase: 0)
+                path.lineCapStyle = .round // .round penting untuk membuat titik terlihat bundar
+            case "solid":
+                fallthrough // Jatuh ke default jika "Solid"
+            default: // Solid
+                path.lineCapStyle = .round // Ujung membulat untuk garis solid (atau .butt jika lebih disukai)
+        }
+        
         self.color.setStroke()
         path.stroke()
 
@@ -91,7 +126,7 @@ class ZLLineView: ZLBaseStickerView {
        path.addLine(to: endPoint)
 
        let hitWidth = max(self.lineWidth, 10) + tapTolerance
-       // MARK: - CORRECTED - No 'if let' needed here
+
        let hitPath = path.cgPath.copy(strokingWithWidth: hitWidth, lineCap: .round, lineJoin: .round, miterLimit: 0)
 
        if hitPath.contains(point) {

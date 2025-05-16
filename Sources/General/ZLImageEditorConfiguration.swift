@@ -124,7 +124,7 @@ public class ZLImageEditorConfiguration: NSObject {
     @objc public var textStickerDefaultFont: UIFont?
     
     /// Whether text sticker allows line break.
-    @objc public var textStickerCanLineBreak = false
+    @objc public var textStickerCanLineBreak = true
     
     private var pri_filters: [ZLFilter] = ZLFilter.all
     /// Filters for image editor.
@@ -206,10 +206,13 @@ public class ZLImageEditorConfiguration: NSObject {
     @objc var defaultArrowWidth: CGFloat = 5.0
     @objc var defaultArrowHeadSize: CGFloat = 15.0 // Length of the head lines
     @objc var defaultArrowHeadAngleConfig: CGFloat = .pi * 0.8
+    
+    @objc var defaultFontSize: CGFloat = 32
 }
 
 public extension ZLImageEditorConfiguration {
     @objc enum EditTool: Int {
+        case select
         case draw
         case clip
         case imageSticker
