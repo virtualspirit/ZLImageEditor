@@ -14,7 +14,7 @@ protocol ShapeStyleSelectorViewDelegate: AnyObject {
     func didSelectStrokeStyle(_ style: String)
 }
 
-class ShapeStyleSelectorView: UIView {
+class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
 
     weak var delegate: ShapeStyleSelectorViewDelegate?
 
@@ -82,6 +82,8 @@ class ShapeStyleSelectorView: UIView {
     }
 
     private func setupView() {
+        let internalTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleInternalTap))
+        self.addGestureRecognizer(internalTapGesture)
         self.backgroundColor = UIColor.black.withAlphaComponent(0.75) // Latar belakang semi-transparan gelap
         self.layer.cornerRadius = 12
         self.layer.masksToBounds = false // Jika menggunakan blur effect, ini mungkin perlu false
@@ -235,7 +237,7 @@ class ShapeStyleSelectorView: UIView {
     }
     
     private func createTextButton(title: String, action: Selector, tag: Int) -> UIButton {
-        let button = UIButton(type: .system)
+        let button = UIButton(type: .custom)
         button.tag = tag
         button.setTitle(title, for: .normal)
         button.setTitleColor(UIColor.white.withAlphaComponent(0.7), for: .normal)
@@ -297,7 +299,7 @@ class ShapeStyleSelectorView: UIView {
         selectedStrokeWidthButton?.backgroundColor = UIColor.white.withAlphaComponent(0.1)
 
         sender.isSelected = true
-        sender.backgroundColor = UIColor.white.withAlphaComponent(0.3)
+        sender.backgroundColor = UIColor.zl.editDoneBtnBgColor
         selectedStrokeWidthButton = sender
         
         let widthItem = strokeWidths[sender.tag]
@@ -369,10 +371,16 @@ class ShapeStyleSelectorView: UIView {
         selectedStrokeStyleButton?.backgroundColor = UIColor.white.withAlphaComponent(0.1)
 
         sender.isSelected = true
-        sender.backgroundColor = UIColor.white.withAlphaComponent(0.3) // Highlight warna
+        sender.backgroundColor = UIColor.zl.editDoneBtnBgColor // Highlight warna
         selectedStrokeStyleButton = sender
         
         let styleItem = strokeStyles[sender.tag]
         delegate?.didSelectStrokeStyle(styleItem.value)
     }
+    
+    @objc private func handleInternalTap(_ gesture: UITapGestureRecognizer) {
+          // This method being called means the tap was on ShapeStyleSelectorView
+          // and will prevent it from propagating further up to ZLEditImageViewController's tap.
+          // No specific action needed here unless you want internal elements to react.
+      }
 }
