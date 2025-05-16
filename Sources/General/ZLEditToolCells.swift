@@ -30,9 +30,14 @@ class ZLEditToolCell: UICollectionViewCell {
     var toolType: ZLImageEditorConfiguration.EditTool = .draw {
         didSet {
             switch toolType {
-            case .draw:
-                icon.image = .zl.getImage("zl_drawLine")
-                icon.highlightedImage = .zl.getImage("zl_drawLine_selected")
+            case .select:
+                icon.image = .zl.getImage("zl_select")
+                icon.highlightedImage = .zl.getImage("zl_select_selected")
+            case .shape:
+                icon.image = .zl.getImage("zl_shape")
+                icon.highlightedImage = .zl.getImage("zl_shape_selected")
+            case .line, .arrow, .square, .circle, .draw:
+                break
             case .clip:
                 icon.image = .zl.getImage("zl_clip")
                 icon.highlightedImage = .zl.getImage("zl_clip")
@@ -53,7 +58,7 @@ class ZLEditToolCell: UICollectionViewCell {
                 icon.highlightedImage = .zl.getImage("zl_adjust_selected")
             }
             if let color = UIColor.zl.toolIconHighlightedColor {
-                icon.highlightedImage = icon.highlightedImage?
+                icon.highlightedImage = icon.image?
                     .zl.fillColor(color)
             }
         }
@@ -201,7 +206,7 @@ class ZLAdjustToolCell: UICollectionViewCell {
                 nameLabel.text = localLanguageTextValue(.saturation)
             }
             if let color = UIColor.zl.toolIconHighlightedColor {
-                imageView.highlightedImage = imageView.highlightedImage?
+                imageView.highlightedImage = imageView.image?
                     .zl.fillColor(color)
             }
         }

@@ -38,8 +38,14 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
         setupUI()
         configImageEditor()
+        
+        let url = "https://virtualspirit.me/assets/front-end/software-development@2x-93c79cac29e995da260cb38bafb3fc19b8d5307ac7f4c719d62c658a004ba701.png"
+        let imageURL = URL(string: url)!
+        guard let imageData = try? Data(contentsOf: imageURL) else { return }
+        self.editImage(UIImage(data: imageData)!, editModel: nil)
     }
     
     func setupUI() {

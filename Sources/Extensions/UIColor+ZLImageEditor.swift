@@ -43,14 +43,6 @@ extension ZLImageEditorWrapper where Base: UIColor {
         ZLImageEditorUIConfiguration.default().editDoneBtnTitleColor
     }
     
-    static var ashbinNormalBgColor: UIColor {
-        ZLImageEditorUIConfiguration.default().ashbinNormalBgColor
-    }
-    
-    static var ashbinTintBgColor: UIColor {
-        ZLImageEditorUIConfiguration.default().ashbinTintBgColor
-    }
-    
     static var toolTitleNormalColor: UIColor {
         ZLImageEditorUIConfiguration.default().toolTitleNormalColor
     }

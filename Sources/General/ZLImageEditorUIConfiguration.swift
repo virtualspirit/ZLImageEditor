@@ -110,16 +110,10 @@ public class ZLImageEditorUIConfiguration: NSObject {
     @objc public var adjustSliderTintColor: UIColor = .zl.rgba(7, 213, 101)
     
     /// The background color of edit done button.
-    @objc public var editDoneBtnBgColor: UIColor = .zl.rgba(7, 213, 101)
+    @objc public var editDoneBtnBgColor: UIColor = .zl.rgba(45, 114, 203)
     
     /// The title color of edit done button.
     @objc public var editDoneBtnTitleColor = UIColor.white
-    
-    /// The normal background color of ashbin.
-    @objc public var ashbinNormalBgColor: UIColor = .zl.rgba(40, 40, 40, 0.8)
-    
-    /// The tint background color of ashbin.
-    @objc public var ashbinTintBgColor: UIColor = .zl.rgba(241, 79, 79, 0.98)
     
     /// The normal color of the title below the various tools in the image editor.
     @objc public var toolTitleNormalColor: UIColor = .zl.rgba(160, 160, 160)
@@ -143,3 +137,14 @@ enum ZLCustomImageDeploy {
     case vertical
     case horizontal
 }
+
+struct ZLFreehandDrawConstants {
+    static let framePadding: CGFloat = 2.0 // Adjust as needed (e.g., 1.0 or 2.0 points)
+}
+
+struct ZLStrokeWidthConstants {
+    static let small: CGFloat = 2.0
+    static let medium: CGFloat = 6.0
+    static let large: CGFloat = 10.0
+}
+

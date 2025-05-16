@@ -47,7 +47,7 @@ protocol ZLStickerViewAdditional: NSObject {
     
     func resetState()
     
-    func moveToAshbin()
+    func remove()
     
     func addScale(_ scale: CGFloat)
 }
@@ -73,9 +73,7 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     var maxGesScale: CGFloat
     
     var originTransform: CGAffineTransform = .identity
-    
-    var timer: Timer?
-    
+        
     var totalTranslationPoint: CGPoint = .zero
     
     var gesTranslationPoint: CGPoint = .zero
@@ -114,17 +112,22 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     
     weak var delegate: ZLStickerViewDelegate?
     
-    deinit {
-        cleanTimer()
-    }
-    
     class func initWithState(_ state: ZLBaseStickertState) -> ZLBaseStickerView? {
         if let state = state as? ZLTextStickerState {
             return ZLTextStickerView(state: state)
         } else if let state = state as? ZLImageStickerState {
             return ZLImageStickerView(state: state)
+        } else if let state = state as? ZLLineState { // Check this case
+            return ZLLineView(state: state)          // Check return type
+        } else if let state = state as? ZLArrowState { // Check this case
+            return ZLArrowView(state: state)         // Check return type
+        } else if let state = state as? ZLShapeState { // Check this case
+            return ZLShapeView(state: state)         // Check return type
+        } else if let state = state as? ZLFreehandDrawState { // Add this
+            return ZLFreehandDrawView(state: state)
         } else {
-            return nil
+            zl_debugPrint("⚠️ Unknown sticker state type encountered in initWithState: \(type(of: state))")
+            return nil // Returning nil is safer than crashing if state is unknown
         }
     }
     
@@ -151,9 +154,6 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         
         borderView.layer.borderWidth = borderWidth
         hideBorder()
-        if showBorder {
-            startTimer()
-        }
         
         addGestureRecognizer(tapGes)
         addGestureRecognizer(pinchGes)
@@ -219,9 +219,8 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     
     @objc func tapAction(_ ges: UITapGestureRecognizer) {
         guard gesIsEnabled else { return }
-        
+        showBorder()
         delegate?.stickerDidTap(self)
-        startTimer()
     }
     
     @objc func pinchAction(_ ges: UIPinchGestureRecognizer) {
@@ -298,12 +297,10 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     func setOperation(_ isOn: Bool) {
         if isOn, !onOperation {
             onOperation = true
-            cleanTimer()
             borderView.layer.borderColor = UIColor.white.cgColor
             delegate?.stickerBeginOperation(self)
         } else if !isOn, onOperation {
             onOperation = false
-            startTimer()
             delegate?.stickerEndOperation(self, panGes: panGes)
         }
     }
@@ -330,24 +327,15 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         delegate?.stickerOnOperation(self, panGes: panGes)
     }
     
-    @objc private func hideBorder() {
+    @objc public func showBorder() {
+        borderView.layer.borderColor = UIColor.white.cgColor
+    }
+    
+    @objc public func hideBorder() {
         borderView.layer.borderColor = UIColor.clear.cgColor
     }
     
-    func startTimer() {
-        cleanTimer()
-        borderView.layer.borderColor = UIColor.white.cgColor
-        timer = Timer.scheduledTimer(timeInterval: 2, target: ZLWeakProxy(target: self), selector: #selector(hideBorder), userInfo: nil, repeats: false)
-        RunLoop.current.add(timer!, forMode: .common)
-    }
-    
-    private func cleanTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-    
     // MARK: UIGestureRecognizerDelegate
-
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
     }
@@ -356,12 +344,10 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
 extension ZLBaseStickerView: ZLStickerViewAdditional {
     func resetState() {
         onOperation = false
-        cleanTimer()
         hideBorder()
     }
     
-    func moveToAshbin() {
-        cleanTimer()
+    func remove() {
         removeFromSuperview()
     }
     

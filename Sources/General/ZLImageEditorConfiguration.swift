@@ -42,7 +42,7 @@ public class ZLImageEditorConfiguration: NSObject {
         .zl.rgba(99, 103, 240),
         .zl.rgba(127, 127, 127)
     ]
-    
+        
     @objc public class func `default`() -> ZLImageEditorConfiguration {
         return ZLImageEditorConfiguration.single
     }
@@ -51,14 +51,14 @@ public class ZLImageEditorConfiguration: NSObject {
         ZLImageEditorConfiguration.single = ZLImageEditorConfiguration()
     }
     
-    private var pri_tools: [ZLImageEditorConfiguration.EditTool] = [.draw, .clip, .imageSticker, .textSticker, .mosaic, .filter, .adjust]
+    private var pri_tools: [ZLImageEditorConfiguration.EditTool] = [.draw, .clip, .imageSticker, .textSticker, .mosaic, .filter, .adjust, .line, .arrow, .square, .circle]
     /// Edit image tools. (Default order is draw, clip, imageSticker, textSticker, mosaic, filtter)
     /// Because Objective-C Array can't contain Enum styles, so this property is not available in Objective-C.
     /// - warning: If you want to use the image sticker feature, you must provide a view that implements ZLImageStickerContainerDelegate.
     public var tools: [ZLImageEditorConfiguration.EditTool] {
         get {
             if pri_tools.isEmpty {
-                return [.draw, .clip, .imageSticker, .textSticker, .mosaic, .filter, .adjust]
+                return [.draw, .clip, .imageSticker, .textSticker, .mosaic, .filter, .adjust, .line, .arrow, .square, .circle]
             } else {
                 return pri_tools
             }
@@ -124,7 +124,7 @@ public class ZLImageEditorConfiguration: NSObject {
     @objc public var textStickerDefaultFont: UIFont?
     
     /// Whether text sticker allows line break.
-    @objc public var textStickerCanLineBreak = false
+    @objc public var textStickerCanLineBreak = true
     
     private var pri_filters: [ZLFilter] = ZLFilter.all
     /// Filters for image editor.
@@ -191,10 +191,28 @@ public class ZLImageEditorConfiguration: NSObject {
     
     /// Whether to keep clipped area dimmed during adjustments. Defaults to false
     @objc public var dimClippedAreaDuringAdjustments = false
+    
+    
+    // Add Default Configuration Options (Optional but Recommended)
+    @objc var defaultLineColor: UIColor = .zl.rgba(249, 80, 81)
+    @objc var defaultLineWidth: CGFloat = 5.0
+
+    @objc var defaultShapeStrokeColor: UIColor = .zl.rgba(249, 80, 81)
+    @objc var defaultShapeFillColor: UIColor? = nil // Default to no fill
+    @objc var defaultShapeLineWidth: CGFloat = 5.0
+    @objc var defaultShapeCornerRadius: CGFloat = 0.0 // For rectangles
+
+    @objc var defaultArrowColor: UIColor = .zl.rgba(249, 80, 81)
+    @objc var defaultArrowWidth: CGFloat = 5.0
+    @objc var defaultArrowHeadSize: CGFloat = 15.0 // Length of the head lines
+    @objc var defaultArrowHeadAngleConfig: CGFloat = .pi * 0.8
+    
+    @objc var defaultFontSize: CGFloat = 32
 }
 
 public extension ZLImageEditorConfiguration {
     @objc enum EditTool: Int {
+        case select
         case draw
         case clip
         case imageSticker
@@ -202,6 +220,18 @@ public extension ZLImageEditorConfiguration {
         case mosaic
         case filter
         case adjust
+         // New tools
+        case line // Straight line
+        case arrow
+        case square
+        case circle
+        case shape
+    }
+
+     @objc enum ShapeType: Int {
+        case rectangle
+        case ellipse
+        // Add other shapes like triangle, star if needed
     }
     
     @objc enum AdjustTool: Int {
