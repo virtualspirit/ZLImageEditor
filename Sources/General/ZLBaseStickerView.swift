@@ -147,7 +147,7 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         self.originFrame = originFrame
         maxGesScale = 4 / originScale
         super.init(frame: .zero)
-        
+
         self.gesScale = gesScale
         self.gesRotation = gesRotation
         self.totalTranslationPoint = totalTranslationPoint
@@ -173,7 +173,7 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
+
         guard firstLayout else {
             return
         }
@@ -307,7 +307,7 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     
     func updateTransform() {
         var transform = originTransform
-        
+
         let direction = direction(for: originAngle)
         if direction == .right {
             transform = transform.translatedBy(x: gesTranslationPoint.y, y: -gesTranslationPoint.x)
@@ -351,6 +351,21 @@ extension ZLBaseStickerView: ZLStickerViewAdditional {
         removeFromSuperview()
     }
     
+    func updateScale(_ scale: CGFloat) {
+        var origin = frame.origin
+        origin.x *= scale
+        origin.y *= scale
+        
+        let newSize = CGSize(width: frame.width * scale, height: frame.height * scale)
+        let diffX: CGFloat = (origin.x - frame.origin.x)
+        let diffY: CGFloat = (origin.y - frame.origin.y)
+                
+        transform = transform.scaledBy(x: scale, y: scale)
+        transform = transform.translatedBy(x: diffX, y: diffY)
+        frame.origin = origin
+        frame.size = newSize
+    }
+
     func addScale(_ scale: CGFloat) {
         // Revert zoom scale.
         transform = transform.scaledBy(x: 1 / originScale, y: 1 / originScale)
