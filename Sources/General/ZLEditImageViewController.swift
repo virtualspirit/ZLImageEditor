@@ -400,7 +400,8 @@ open class ZLEditImageViewController: UIViewController {
     override open var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { [.top, .bottom] }
     
     override open var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        deviceIsiPhone() ? .portrait : .all
+//        deviceIsiPhone() ? .portrait : .all
+        .all
     }
     
     var previewLayer: CAShapeLayer? // For temporary drawing preview
@@ -548,7 +549,7 @@ open class ZLEditImageViewController: UIViewController {
     
     override open func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
+
         guard tools.contains(.draw) else { return }
         
         var size = drawingImageView.frame.size
@@ -686,38 +687,63 @@ open class ZLEditImageViewController: UIViewController {
         
         let editSize = editRect.size
         let scrollViewSize = mainScrollView.frame.size
-        let ratio = min(scrollViewSize.width / editSize.width, scrollViewSize.height / editSize.height)
-        let w = ratio * editSize.width * mainScrollView.zoomScale
-        let h = ratio * editSize.height * mainScrollView.zoomScale
-        containerView.frame = CGRect(x: max(0, (scrollViewSize.width - w) / 2), y: max(0, (scrollViewSize.height - h) / 2), width: w, height: h)
-        mainScrollView.contentSize = containerView.frame.size
+        
+        let containerSize: CGSize
+        if editSize.width / editSize.height > scrollViewSize.width / scrollViewSize.height {
+            let width = scrollViewSize.width
+            let height = width * editSize.height / editSize.width
+            containerSize = CGSize(width: width, height: height)
+        } else {
+            let height = scrollViewSize.height
+            let width = height * editSize.width / editSize.height
+            containerSize = CGSize(width: width, height: height)
+        }
+        
+        containerView.frame = CGRect(
+            x: (scrollViewSize.width - containerSize.width) / 2,
+            y: (scrollViewSize.height - containerSize.height) / 2,
+            width: containerSize.width,
+            height: containerSize.height
+        )
+        mainScrollView.contentSize = containerSize
         
         if currentClipStatus.ratio?.isCircle == true {
             let mask = CAShapeLayer()
-            let path = UIBezierPath(arcCenter: CGPoint(x: w / 2, y: h / 2), radius: w / 2, startAngle: 0, endAngle: .pi * 2, clockwise: true)
+            let path = UIBezierPath(arcCenter: CGPoint(x: containerSize.width / 2, y: containerSize.height / 2), radius: containerSize.width / 2, startAngle: 0, endAngle: .pi * 2, clockwise: true)
             mask.path = path.cgPath
             containerView.layer.mask = mask
         } else {
             containerView.layer.mask = nil
         }
         
+        // ImageView, drawingImageView, dan stickersContainer harus memiliki frame yang sama
+        let ratio = min(scrollViewSize.width / editSize.width, scrollViewSize.height / editSize.height)
         let scaleImageOrigin = CGPoint(x: -editRect.origin.x * ratio, y: -editRect.origin.y * ratio)
         let scaleImageSize = CGSize(width: imageSize.width * ratio, height: imageSize.height * ratio)
-        imageView.frame = CGRect(origin: scaleImageOrigin, size: scaleImageSize)
+        let imageFrame = CGRect(origin: scaleImageOrigin, size: scaleImageSize)
+        
+        let stickerScaleWidth = imageFrame.width / stickersContainer.frame.width
+        
+        imageView.frame = imageFrame
         mosaicImageLayer?.frame = imageView.bounds
         mosaicImageLayerMaskLayer?.frame = imageView.bounds
-        drawingImageView.frame = imageView.frame
-        stickersContainer.frame = imageView.frame
-        
-        // Optimization for long pictures.
-        if (editRect.height / editRect.width) > (view.frame.height / view.frame.width * 1.1) {
-            let widthScale = view.frame.width / w
-            mainScrollView.maximumZoomScale = widthScale
-            mainScrollView.zoomScale = widthScale
-            mainScrollView.contentOffset = .zero
-        } else if editRect.width / editRect.height > 1 {
-            mainScrollView.maximumZoomScale = max(3, view.frame.height / h)
+        drawingImageView.frame = imageFrame
+        stickersContainer.frame = imageFrame
+                
+        // Apply scale to all stickers
+        stickersContainer.subviews.forEach { view in
+            if let stickerView = view as? ZLBaseStickerView {
+                stickerView.updateScale(stickerScaleWidth)
+            }
         }
+                
+        // Set maximum zoom scale berdasarkan ukuran base
+        let maxZoomScale = max(
+            scrollViewSize.width / containerSize.width,
+            scrollViewSize.height / containerSize.height
+        ) * 3
+        
+        mainScrollView.maximumZoomScale = maxZoomScale
         
         originalFrame = view.convert(containerView.frame, from: mainScrollView)
         isScrolling = false
@@ -1511,7 +1537,7 @@ open class ZLEditImageViewController: UIViewController {
             )
             drawPathObject.path = relativePath // The UIBezierPath from user's gesture
 
-            let originScale = 1.0 / mainScrollView.zoomScale
+            let originScale = 1.0
             let originAngle = -currentClipStatus.angle
 
             let freehandState = ZLFreehandDrawState(
@@ -1919,15 +1945,29 @@ open class ZLEditImageViewController: UIViewController {
     
     func recalculateStickersFrame(_ oldSize: CGSize, _ oldAngle: CGFloat, _ newAngle: CGFloat) {
         let currSize = stickersContainer.frame.size
+        
+        // Calculate proper scale based on orientation change
         let scale: CGFloat
-        if Int(newAngle - oldAngle) % 180 == 0 {
+        if abs(Int(newAngle - oldAngle)) % 180 == 0 {
+            // No 90/270 degree rotation - use direct ratio
             scale = currSize.width / oldSize.width
         } else {
-            scale = currSize.height / oldSize.width
+            // 90/270 degree rotation - swap dimensions
+            scale = currSize.width / oldSize.height
         }
         
+    
+        // Apply scale to all stickers
         stickersContainer.subviews.forEach { view in
-            (view as? ZLStickerViewAdditional)?.addScale(scale)
+            if let stickerView = view as? ZLBaseStickerView {
+                // Scale both position and size
+                var frame = stickerView.frame
+                frame.origin.x *= scale
+                frame.origin.y *= scale
+                frame.size.width *= scale
+                frame.size.height *= scale
+                stickerView.frame = frame
+            }
         }
     }
     
