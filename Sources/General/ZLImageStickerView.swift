@@ -29,7 +29,7 @@ import UIKit
 class ZLImageStickerView: ZLBaseStickerView {
     private let image: UIImage
     
-    private static let edgeInset: CGFloat = 20
+    private static let edgeInset: CGFloat = 8
     
     private lazy var imageView: UIImageView = {
         let view = UIImageView(image: image)
@@ -109,8 +109,8 @@ class ZLImageStickerView: ZLBaseStickerView {
     }
     
     class func calculateSize(image: UIImage, width: CGFloat) -> CGSize {
-        let maxSide = width / 2
-        let minSide: CGFloat = 100
+        let maxSide = width / 4
+        let minSide: CGFloat = 60
         let whRatio = image.size.width / image.size.height
         var size: CGSize = .zero
         if whRatio >= 1 {

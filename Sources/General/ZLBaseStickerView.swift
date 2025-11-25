@@ -119,6 +119,7 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     weak var delegate: ZLStickerViewDelegate?
 
     private let handleSize: CGFloat = 14
+    private let rotateHandleSize: CGFloat = 20
     private let handleLineWidth: CGFloat = 1
     private let rotateHandleOffset: CGFloat = 24
     private lazy var handlesContainer: UIView = {
@@ -151,7 +152,8 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         btn.addGestureRecognizer(pan)
         return btn
     }()
-    private var currentCornerInfo: (unit: CGPoint, distance: CGFloat)?
+    private var currentCornerInfo: (unit: CGPoint, baseDistance: CGFloat, centerInSuper: CGPoint, startGesScale: CGFloat)?
+    private var lastRotateAngle: CGFloat?
     
     class func initWithState(_ state: ZLBaseStickertState) -> ZLBaseStickerView? {
         if let state = state as? ZLTextStickerState {
@@ -204,7 +206,6 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         addGestureRecognizer(panGes)
         tapGes.require(toFail: panGes)
 
-        addSubview(handlesContainer)
         cornerHandles.forEach { handlesContainer.addSubview($0) }
         handlesContainer.addSubview(rotateHandle)
     }
@@ -257,36 +258,43 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     func setupUIFrameWhenFirstLayout() {}
 
     private func layoutHandles() {
-        let w = bounds.width
-        let h = bounds.height
-        let expandX = handleSize / 2
-        let expandTop = rotateHandleOffset + handleSize / 2
-        let expandBottom = handleSize / 2
-        handlesContainer.frame = CGRect(x: -expandX, y: -expandTop, width: w + expandX * 2, height: h + expandTop + expandBottom)
+        guard let sp = superview else { return }
+        if handlesContainer.superview !== sp {
+            handlesContainer.removeFromSuperview()
+            sp.addSubview(handlesContainer)
+            sp.bringSubviewToFront(handlesContainer)
+        }
+        handlesContainer.frame = sp.bounds
 
-        let left = expandX
-        let top = expandTop
-        let right = expandX + w
-        let bottom = expandTop + h
+        let tl = convert(CGPoint(x: 0, y: 0), to: sp)
+        let tr = convert(CGPoint(x: bounds.width, y: 0), to: sp)
+        let bl = convert(CGPoint(x: 0, y: bounds.height), to: sp)
+        let br = convert(CGPoint(x: bounds.width, y: bounds.height), to: sp)
+        let topMid = convert(CGPoint(x: bounds.midX, y: 0), to: sp)
+        let center = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: sp)
+
         let size = CGSize(width: handleSize, height: handleSize)
+        cornerHandles[0].frame = CGRect(x: tl.x - handleSize/2, y: tl.y - handleSize/2, width: size.width, height: size.height)
+        cornerHandles[1].frame = CGRect(x: tr.x - handleSize/2, y: tr.y - handleSize/2, width: size.width, height: size.height)
+        cornerHandles[2].frame = CGRect(x: bl.x - handleSize/2, y: bl.y - handleSize/2, width: size.width, height: size.height)
+        cornerHandles[3].frame = CGRect(x: br.x - handleSize/2, y: br.y - handleSize/2, width: size.width, height: size.height)
 
-        cornerHandles[0].frame = CGRect(x: left - handleSize/2, y: top - handleSize/2, width: size.width, height: size.height)
-        cornerHandles[1].frame = CGRect(x: right - handleSize/2, y: top - handleSize/2, width: size.width, height: size.height)
-        cornerHandles[2].frame = CGRect(x: left - handleSize/2, y: bottom - handleSize/2, width: size.width, height: size.height)
-        cornerHandles[3].frame = CGRect(x: right - handleSize/2, y: bottom - handleSize/2, width: size.width, height: size.height)
+        var dir = CGPoint(x: topMid.x - center.x, y: topMid.y - center.y)
+        let len = max(0.0001, sqrt(dir.x*dir.x + dir.y*dir.y))
+        dir.x /= len; dir.y /= len
+        let pos = CGPoint(x: topMid.x + dir.x * rotateHandleOffset, y: topMid.y + dir.y * rotateHandleOffset)
+        rotateHandle.frame = CGRect(x: pos.x - rotateHandleSize/2, y: pos.y - rotateHandleSize/2, width: rotateHandleSize, height: rotateHandleSize)
+    }
 
-        let midX = (left + right) / 2
-        rotateHandle.frame = CGRect(x: midX - handleSize/2, y: top - rotateHandleOffset - handleSize/2, width: handleSize, height: handleSize)
+    private func currentVisualScale() -> (x: CGFloat, y: CGFloat) {
+        let t = self.transform
+        let sx = sqrt(t.a * t.a + t.c * t.c)
+        let sy = sqrt(t.b * t.b + t.d * t.d)
+        return (sx, sy)
     }
 
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        let w = bounds.width
-        let h = bounds.height
-        let expandX = handleSize / 2
-        let expandTop = rotateHandleOffset + handleSize / 2
-        let expandBottom = handleSize / 2
-        let expandedRect = CGRect(x: -expandX, y: -expandTop, width: w + expandX * 2, height: h + expandTop + expandBottom)
-        return expandedRect.contains(point)
+        return super.point(inside: point, with: event)
     }
     
     private func direction(for angle: CGFloat) -> ZLBaseStickerView.Direction {
@@ -434,6 +442,7 @@ extension ZLBaseStickerView: ZLStickerViewAdditional {
     }
     
     func remove() {
+        handlesContainer.removeFromSuperview()
         removeFromSuperview()
     }
     
@@ -502,22 +511,32 @@ extension ZLBaseStickerView: ZLStickerViewAdditional {
     @objc private func cornerPanAction(_ ges: UIPanGestureRecognizer) {
         guard gesIsEnabled else { return }
         let superV = superview ?? self
-        let translation = ges.translation(in: superV)
         if ges.state == .began {
             setOperation(true)
-            let centerInSuper = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: superV)
-            let handleInSuper = ges.view.map { convert(CGPoint(x: $0.frame.midX, y: $0.frame.midY), to: superV) } ?? centerInSuper
-            var u = CGPoint(x: handleInSuper.x - centerInSuper.x, y: handleInSuper.y - centerInSuper.y)
+            let center = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: superV)
+            var corner = center
+            if let idx = cornerHandles.firstIndex(where: { $0 === ges.view }) {
+                switch idx {
+                case 0: corner = convert(CGPoint(x: 0, y: 0), to: superV)
+                case 1: corner = convert(CGPoint(x: bounds.width, y: 0), to: superV)
+                case 2: corner = convert(CGPoint(x: 0, y: bounds.height), to: superV)
+                default: corner = convert(CGPoint(x: bounds.width, y: bounds.height), to: superV)
+                }
+            } else {
+                corner = ges.view.map { convert(CGPoint(x: $0.frame.midX, y: $0.frame.midY), to: superV) } ?? center
+            }
+            var u = CGPoint(x: corner.x - center.x, y: corner.y - center.y)
             let d = max(1, sqrt(u.x*u.x + u.y*u.y))
             u.x /= d; u.y /= d
-            currentCornerInfo = (u, d)
+            currentCornerInfo = (u, d, center, gesScale)
         } else if ges.state == .changed {
             guard let info = currentCornerInfo else { return }
-            let dot = info.unit.x*translation.x + info.unit.y*translation.y
-            let factor = 1 + dot / max(30, info.distance)
-            let newScale = min(maxGesScale, max(0.2, gesScale * factor))
-            if newScale != gesScale {
-                gesScale = newScale
+            let t = ges.translation(in: superV)
+            let dot = info.unit.x * t.x + info.unit.y * t.y
+            let factor = 1 + dot / max(20, info.baseDistance)
+            let targetScale = min(maxGesScale, max(0.2, gesScale * factor))
+            if targetScale != gesScale {
+                gesScale = targetScale
                 updateTransform()
                 layoutHandles()
             }
@@ -531,23 +550,23 @@ extension ZLBaseStickerView: ZLStickerViewAdditional {
     @objc private func rotateHandlePan(_ ges: UIPanGestureRecognizer) {
         guard gesIsEnabled else { return }
         let superV = superview ?? self
-        let t = ges.translation(in: superV)
+        let centerInSuper = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: superV)
+        let loc = ges.location(in: superV)
+        let angle = atan2(loc.y - centerInSuper.y, loc.x - centerInSuper.x)
         if ges.state == .began {
             setOperation(true)
+            lastRotateAngle = angle
         } else if ges.state == .changed {
-            let centerInSuper = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: superV)
-            let handleCenter = rotateHandle.center
-            let handleInSuper = convert(handleCenter, to: superV)
-            let v0 = CGPoint(x: handleInSuper.x - centerInSuper.x, y: handleInSuper.y - centerInSuper.y)
-            let v1 = CGPoint(x: v0.x + t.x, y: v0.y + t.y)
-            let a0 = atan2(v0.y, v0.x)
-            let a1 = atan2(v1.y, v1.x)
-            let delta = a1 - a0
+            guard let last = lastRotateAngle else { return }
+            var delta = angle - last
+            // Normalize delta to [-pi, pi]
+            if delta > .pi { delta -= 2 * .pi } else if delta < -.pi { delta += 2 * .pi }
             gesRotation += delta
+            lastRotateAngle = angle
             updateTransform()
-            ges.setTranslation(.zero, in: superV)
         } else if ges.state == .ended || ges.state == .cancelled {
             setOperation(false)
+            lastRotateAngle = nil
         }
     }
 }
