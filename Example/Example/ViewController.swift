@@ -223,10 +223,16 @@ class ViewController: UIViewController {
 //                    .editFinish: "👌"
 //                ]
 //            )
-        
         ZLImageEditorConfiguration.default()
             // Provide a image sticker container view
-            .imageStickerContainerView(ImageStickerContainerView())
+            // Load local assets
+            // .imageStickerFiles((1...18).map { "imageSticker\($0)" })
+            .imageStickerFiles([
+                "https://i.ibb.co.com/Rphh828f/dumbbell.png",
+                "https://i.ibb.co.com/DfNQZQRk/balloons.png",
+                "https://i.ibb.co.com/jv6kdm37/balloon.png",
+                "https://i.ibb.co.com/PsRyMGY8/cupcake.png"
+            ])
             .fontChooserContainerView(FontChooserContainerView())
             .clipRatios(ZLImageClipRatio.all)
             // Custom filter

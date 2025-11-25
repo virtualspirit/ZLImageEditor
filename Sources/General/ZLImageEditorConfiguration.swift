@@ -141,7 +141,21 @@ public class ZLImageEditorConfiguration: NSObject {
         }
     }
     
-    @objc public var imageStickerContainerView: (UIView & ZLImageStickerContainerDelegate)?
+    /// Image sticker files.
+    @objc public var imageStickerFiles: [String] = []
+
+    private var pri_imageStickerContainerView: (UIView & ZLImageStickerContainerDelegate)?
+    @objc public var imageStickerContainerView: (UIView & ZLImageStickerContainerDelegate)? {
+        get {
+            if pri_imageStickerContainerView == nil {
+                pri_imageStickerContainerView = ZLImageStickerContainerView()
+            }
+            return pri_imageStickerContainerView
+        }
+        set {
+            pri_imageStickerContainerView = newValue
+        }
+    }
 
     @objc public var fontChooserContainerView: (UIView & ZLTextFontChooserDelegate)?
 
