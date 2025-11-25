@@ -96,6 +96,12 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         return pinch
     }()
     
+    lazy var rotationGes: UIRotationGestureRecognizer = {
+        let g = UIRotationGestureRecognizer(target: self, action: #selector(rotationAction(_:)))
+        g.delegate = self
+        return g
+    }()
+    
     lazy var panGes: UIPanGestureRecognizer = {
         let pan = UIPanGestureRecognizer(target: self, action: #selector(panAction(_:)))
         pan.delegate = self
@@ -111,6 +117,41 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
     }
     
     weak var delegate: ZLStickerViewDelegate?
+
+    private let handleSize: CGFloat = 14
+    private let handleLineWidth: CGFloat = 1
+    private let rotateHandleOffset: CGFloat = 24
+    private lazy var handlesContainer: UIView = {
+        let v = UIView()
+        v.isUserInteractionEnabled = true
+        v.isHidden = true
+        return v
+    }()
+    private lazy var cornerHandles: [UIView] = {
+        return (0..<4).map { _ in
+            let v = ZLEnlargeButton(type: .custom)
+            v.backgroundColor = .white
+            v.layer.borderColor = UIColor.zl.toolTitleTintColor.cgColor
+            v.layer.borderWidth = handleLineWidth
+            v.layer.cornerRadius = handleSize/2
+            v.layer.masksToBounds = true
+            v.enlargeInset = 10
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(cornerPanAction(_:)))
+            pan.delegate = self
+            v.addGestureRecognizer(pan)
+            return v
+        }
+    }()
+    private lazy var rotateHandle: ZLEnlargeButton = {
+        let btn = ZLEnlargeButton(type: .custom)
+        btn.setImage(.zl.getImage("zl_rotateimage"), for: .normal)
+        btn.adjustsImageWhenHighlighted = false
+        btn.enlargeInset = 10
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(rotateHandlePan(_:)))
+        btn.addGestureRecognizer(pan)
+        return btn
+    }()
+    private var currentCornerInfo: (unit: CGPoint, distance: CGFloat)?
     
     class func initWithState(_ state: ZLBaseStickertState) -> ZLBaseStickerView? {
         if let state = state as? ZLTextStickerState {
@@ -158,12 +199,14 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         addGestureRecognizer(tapGes)
         addGestureRecognizer(pinchGes)
         
-        let rotationGes = UIRotationGestureRecognizer(target: self, action: #selector(rotationAction(_:)))
-        rotationGes.delegate = self
         addGestureRecognizer(rotationGes)
         
         addGestureRecognizer(panGes)
         tapGes.require(toFail: panGes)
+
+        addSubview(handlesContainer)
+        cornerHandles.forEach { handlesContainer.addSubview($0) }
+        handlesContainer.addSubview(rotateHandle)
     }
     
     @available(*, unavailable)
@@ -207,9 +250,44 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         
         firstLayout = false
         setupUIFrameWhenFirstLayout()
+
+        layoutHandles()
     }
     
     func setupUIFrameWhenFirstLayout() {}
+
+    private func layoutHandles() {
+        let w = bounds.width
+        let h = bounds.height
+        let expandX = handleSize / 2
+        let expandTop = rotateHandleOffset + handleSize / 2
+        let expandBottom = handleSize / 2
+        handlesContainer.frame = CGRect(x: -expandX, y: -expandTop, width: w + expandX * 2, height: h + expandTop + expandBottom)
+
+        let left = expandX
+        let top = expandTop
+        let right = expandX + w
+        let bottom = expandTop + h
+        let size = CGSize(width: handleSize, height: handleSize)
+
+        cornerHandles[0].frame = CGRect(x: left - handleSize/2, y: top - handleSize/2, width: size.width, height: size.height)
+        cornerHandles[1].frame = CGRect(x: right - handleSize/2, y: top - handleSize/2, width: size.width, height: size.height)
+        cornerHandles[2].frame = CGRect(x: left - handleSize/2, y: bottom - handleSize/2, width: size.width, height: size.height)
+        cornerHandles[3].frame = CGRect(x: right - handleSize/2, y: bottom - handleSize/2, width: size.width, height: size.height)
+
+        let midX = (left + right) / 2
+        rotateHandle.frame = CGRect(x: midX - handleSize/2, y: top - rotateHandleOffset - handleSize/2, width: handleSize, height: handleSize)
+    }
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        let w = bounds.width
+        let h = bounds.height
+        let expandX = handleSize / 2
+        let expandTop = rotateHandleOffset + handleSize / 2
+        let expandBottom = handleSize / 2
+        let expandedRect = CGRect(x: -expandX, y: -expandTop, width: w + expandX * 2, height: h + expandTop + expandBottom)
+        return expandedRect.contains(point)
+    }
     
     private func direction(for angle: CGFloat) -> ZLBaseStickerView.Direction {
         // 将角度转换为0~360，并对360取余
@@ -325,18 +403,26 @@ class ZLBaseStickerView: UIView, UIGestureRecognizerDelegate {
         self.transform = transform
         
         delegate?.stickerOnOperation(self, panGes: panGes)
+        layoutHandles()
     }
     
     @objc public func showBorder() {
         borderView.layer.borderColor = UIColor.white.cgColor
+        handlesContainer.isHidden = false
     }
     
     @objc public func hideBorder() {
         borderView.layer.borderColor = UIColor.clear.cgColor
+        handlesContainer.isHidden = true
     }
     
     // MARK: UIGestureRecognizerDelegate
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        let isHandleGes = cornerHandles.contains(where: { $0.gestureRecognizers?.contains(gestureRecognizer) == true }) || rotateHandle.gestureRecognizers?.contains(gestureRecognizer) == true
+        let isOtherHandleGes = cornerHandles.contains(where: { $0.gestureRecognizers?.contains(otherGestureRecognizer) == true }) || rotateHandle.gestureRecognizers?.contains(otherGestureRecognizer) == true
+        if isHandleGes || isOtherHandleGes {
+            return false
+        }
         return true
     }
 }
@@ -411,5 +497,57 @@ extension ZLBaseStickerView: ZLStickerViewAdditional {
         
         gesScale *= scale
         maxGesScale *= scale
+    }
+
+    @objc private func cornerPanAction(_ ges: UIPanGestureRecognizer) {
+        guard gesIsEnabled else { return }
+        let superV = superview ?? self
+        let translation = ges.translation(in: superV)
+        if ges.state == .began {
+            setOperation(true)
+            let centerInSuper = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: superV)
+            let handleInSuper = ges.view.map { convert(CGPoint(x: $0.frame.midX, y: $0.frame.midY), to: superV) } ?? centerInSuper
+            var u = CGPoint(x: handleInSuper.x - centerInSuper.x, y: handleInSuper.y - centerInSuper.y)
+            let d = max(1, sqrt(u.x*u.x + u.y*u.y))
+            u.x /= d; u.y /= d
+            currentCornerInfo = (u, d)
+        } else if ges.state == .changed {
+            guard let info = currentCornerInfo else { return }
+            let dot = info.unit.x*translation.x + info.unit.y*translation.y
+            let factor = 1 + dot / max(30, info.distance)
+            let newScale = min(maxGesScale, max(0.2, gesScale * factor))
+            if newScale != gesScale {
+                gesScale = newScale
+                updateTransform()
+                layoutHandles()
+            }
+            ges.setTranslation(.zero, in: superV)
+        } else if ges.state == .ended || ges.state == .cancelled {
+            setOperation(false)
+            currentCornerInfo = nil
+        }
+    }
+
+    @objc private func rotateHandlePan(_ ges: UIPanGestureRecognizer) {
+        guard gesIsEnabled else { return }
+        let superV = superview ?? self
+        let t = ges.translation(in: superV)
+        if ges.state == .began {
+            setOperation(true)
+        } else if ges.state == .changed {
+            let centerInSuper = convert(CGPoint(x: bounds.midX, y: bounds.midY), to: superV)
+            let handleCenter = rotateHandle.center
+            let handleInSuper = convert(handleCenter, to: superV)
+            let v0 = CGPoint(x: handleInSuper.x - centerInSuper.x, y: handleInSuper.y - centerInSuper.y)
+            let v1 = CGPoint(x: v0.x + t.x, y: v0.y + t.y)
+            let a0 = atan2(v0.y, v0.x)
+            let a1 = atan2(v1.y, v1.x)
+            let delta = a1 - a0
+            gesRotation += delta
+            updateTransform()
+            ges.setTranslation(.zero, in: superV)
+        } else if ges.state == .ended || ges.state == .cancelled {
+            setOperation(false)
+        }
     }
 }
