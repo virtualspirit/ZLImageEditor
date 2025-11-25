@@ -96,6 +96,9 @@ class ZLShapeView: ZLBaseStickerView {
         self.backgroundColor = .clear
         self.contentMode = .redraw
         self.layer.borderWidth = 1 // Ensure no visual border
+
+        pinchGes.isEnabled = false
+        rotationGes.isEnabled = false
     }
 
     required init?(coder: NSCoder) {
@@ -152,12 +155,9 @@ class ZLShapeView: ZLBaseStickerView {
 
     // MARK: - Precise Hit Testing
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        guard self.point(inside: point, with: event) else {
-            return nil
-        }
+        if let v = super.hitTest(point, with: event) { return v }
 
         let path: UIBezierPath
-        // ... (create path based on shapeType) ...
         switch shapeType {
         case .rectangle:
             if cornerRadius > 0 {
@@ -169,30 +169,20 @@ class ZLShapeView: ZLBaseStickerView {
             path = UIBezierPath(ovalIn: shapeBounds)
         }
 
-
         if fillColor != nil {
-            // Option 1: Simple contains check (usually fine for fills)
-             if path.contains(point) { return self }
-
-            // Option 2: Check with tolerance using stroked path (if needed near edge)
-             let hitPathForFill = path.cgPath.copy(strokingWithWidth: tapTolerance, lineCap: .round, lineJoin: .round, miterLimit: 0)
-             if hitPathForFill.contains(point) { return self }
+            if path.contains(point) { return self }
+            let hitPathForFill = path.cgPath.copy(strokingWithWidth: tapTolerance, lineCap: .round, lineJoin: .round, miterLimit: 0)
+            if hitPathForFill.contains(point) { return self }
         } else {
-            // Only stroked shape
             let hitWidth = max(self.lineWidth, 10) + tapTolerance
-            // MARK: - CORRECTED - No 'if let' needed here
             let hitPath = path.cgPath.copy(strokingWithWidth: hitWidth, lineCap: .round, lineJoin: .round, miterLimit: 0)
-
-            if hitPath.contains(point) {
-                return self
-            }
+            if hitPath.contains(point) { return self }
         }
 
         return nil
     }
     
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        let expandedBounds = self.bounds.insetBy(dx: -tapTolerance, dy: -tapTolerance)
-        return expandedBounds.contains(point)
+        return super.point(inside: point, with: event)
     }
 }

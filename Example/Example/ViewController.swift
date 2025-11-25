@@ -228,10 +228,15 @@ class ViewController: UIViewController {
             // Load local assets
             // .imageStickerFiles((1...18).map { "imageSticker\($0)" })
             .imageStickerFiles([
-                "https://i.ibb.co.com/Rphh828f/dumbbell.png",
-                "https://i.ibb.co.com/DfNQZQRk/balloons.png",
-                "https://i.ibb.co.com/jv6kdm37/balloon.png",
-                "https://i.ibb.co.com/PsRyMGY8/cupcake.png"
+                "https://cdn-icons-png.flaticon.com/256/4392/4392452.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392455.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392459.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392462.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392465.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392467.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392469.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392471.png",
+                "https://cdn-icons-png.flaticon.com/256/4392/4392522.png",
             ])
             .fontChooserContainerView(FontChooserContainerView())
             .clipRatios(ZLImageClipRatio.all)

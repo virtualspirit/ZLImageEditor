@@ -128,6 +128,9 @@ class ZLTextStickerView: ZLBaseStickerView {
         )
         
         borderView.addSubview(imageView)
+
+        pinchGes.isEnabled = false
+        rotationGes.isEnabled = false
     }
     
     @available(*, unavailable)
