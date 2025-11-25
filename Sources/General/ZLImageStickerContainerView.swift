@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 public class ZLImageStickerContainerView: UIView, ZLImageStickerContainerDelegate {
     
@@ -200,17 +201,32 @@ extension ZLImageStickerContainerView: UICollectionViewDataSource, UICollectionV
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NSStringFromClass(ZLImageStickerCell.classForCoder()), for: indexPath) as! ZLImageStickerCell
         
-        cell.imageView.image = UIImage(named: self.datas[indexPath.row])
+        let path = self.datas[indexPath.row]
+        if let url = URL(string: path), (path.hasPrefix("http") || path.hasPrefix("https")) {
+            cell.imageView.sd_setImage(with: url)
+        } else {
+            cell.imageView.image = UIImage(named: path)
+        }
         
         return cell
     }
     
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let image = UIImage(named: self.datas[indexPath.row]) else {
-            return
+        let path = self.datas[indexPath.row]
+        if let url = URL(string: path), (path.hasPrefix("http") || path.hasPrefix("https")) {
+            SDWebImageManager.shared.loadImage(with: url, options: .highPriority, progress: nil) { (image, _, _, _, _, _) in
+                if let image = image {
+                    self.selectImageBlock?(image)
+                    self.hide()
+                }
+            }
+        } else {
+            guard let image = UIImage(named: path) else {
+                return
+            }
+            self.selectImageBlock?(image)
+            self.hide()
         }
-        self.selectImageBlock?(image)
-        self.hide()
     }
     
 }
