@@ -86,6 +86,12 @@ public extension ZLImageEditorConfiguration {
         imageStickerContainerView = view
         return self
     }
+    
+    @discardableResult
+    func imageStickerFiles(_ files: [String]) -> ZLImageEditorConfiguration {
+        imageStickerFiles = files
+        return self
+    }
 
     @discardableResult
     func fontChooserContainerView(_ view: (UIView & ZLTextFontChooserDelegate)?) -> ZLImageEditorConfiguration {
