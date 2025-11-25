@@ -203,8 +203,10 @@ extension ZLImageStickerContainerView: UICollectionViewDataSource, UICollectionV
         
         let path = self.datas[indexPath.row]
         if let url = URL(string: path), (path.hasPrefix("http") || path.hasPrefix("https")) {
+            cell.imageView.sd_imageIndicator = SDWebImageActivityIndicator.gray
             cell.imageView.sd_setImage(with: url)
         } else {
+            cell.imageView.sd_imageIndicator = nil
             cell.imageView.image = UIImage(named: path)
         }
         
