@@ -33,9 +33,9 @@ class ZLInputTextViewController: UIViewController {
     
     private var text: String
     
-    private var fontSize: CGFloat = ZLImageEditorConfiguration().defaultFontSize
+    private var fontSize: CGFloat = ZLImageEditorConfiguration.default().defaultTextStickerSize
 
-    private var font: UIFont = .boldSystemFont(ofSize: ZLImageEditorConfiguration().defaultFontSize)
+    private var font: UIFont = .boldSystemFont(ofSize: ZLImageEditorConfiguration.default().defaultTextStickerSize)
     
     private var textColor: UIColor {
         didSet {
@@ -51,7 +51,7 @@ class ZLInputTextViewController: UIViewController {
     
     private var currentIsBold: Bool = false
     private var currentIsItalic: Bool = false
-    private var baseFontName: String = ZLImageEditorConfiguration.default().textStickerDefaultFont?.fontName ?? UIFont.systemFont(ofSize: 1).fontName
+    private var baseFontName: String = ZLImageEditorConfiguration.default().defaultTextStickerFontFamily?.fontName ?? UIFont.systemFont(ofSize: 1).fontName
         
     private lazy var bgImageView: UIImageView = {
         let view = UIImageView(image: image?.zl.blurImage(level: 4))
@@ -179,10 +179,10 @@ class ZLInputTextViewController: UIViewController {
         if let textColor = textColor {
             self.textColor = textColor
         } else {
-            if !ZLImageEditorConfiguration.default().textStickerTextColors.contains(ZLImageEditorConfiguration.default().textStickerDefaultTextColor) {
+            if !ZLImageEditorConfiguration.default().textStickerTextColors.contains(ZLImageEditorConfiguration.default().defaultTextStickerColor) {
                 self.textColor = ZLImageEditorConfiguration.default().textStickerTextColors.first!
             } else {
-                self.textColor = ZLImageEditorConfiguration.default().textStickerDefaultTextColor
+                self.textColor = ZLImageEditorConfiguration.default().defaultTextStickerColor
             }
         }
         if let fillColor = fillColor {

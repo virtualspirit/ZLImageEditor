@@ -148,3 +148,23 @@ struct ZLStrokeWidthConstants {
     static let large: CGFloat = 10.0
 }
 
+@objc public enum ZLStrokeWidthOption: Int {
+    case small
+    case medium
+    case large
+
+    public var value: CGFloat {
+        switch self {
+        case .small: return ZLStrokeWidthConstants.small
+        case .medium: return ZLStrokeWidthConstants.medium
+        case .large: return ZLStrokeWidthConstants.large
+        }
+    }
+}
+
+@objc public enum ZLStrokeStyle: Int {
+    case solid
+    case dashed
+    case dotted
+}
+

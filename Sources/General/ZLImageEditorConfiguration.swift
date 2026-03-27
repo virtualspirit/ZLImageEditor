@@ -101,15 +101,14 @@ public class ZLImageEditorConfiguration: NSObject {
         }
     }
     
-    private var pri_textStickerTextColors = ZLImageEditorConfiguration.defaultColors
-    /// Text sticker colors for image editor.
+    private var pri_textStickerTextColors: [UIColor]? = nil
+    /// Text sticker colors for image editor. Defaults to `drawColors` if not explicitly set.
     @objc public var textStickerTextColors: [UIColor] {
         get {
-            if pri_textStickerTextColors.isEmpty {
-                return ZLImageEditorConfiguration.defaultColors
-            } else {
-                return pri_textStickerTextColors
+            if let colors = pri_textStickerTextColors, !colors.isEmpty {
+                return colors
             }
+            return drawColors
         }
         set {
             pri_textStickerTextColors = newValue
@@ -117,11 +116,11 @@ public class ZLImageEditorConfiguration: NSObject {
     }
     
     /// The default text sticker color. If this color not in textStickerTextColors, will pick the first color in textStickerTextColors as the default.
-    @objc public var textStickerDefaultTextColor = UIColor.white
+    @objc public var defaultTextStickerColor = UIColor.white
     
     /// The default font of text sticker.
     /// - Note: This property is ignored when using fontChooserContainerView.
-    @objc public var textStickerDefaultFont: UIFont?
+    @objc public var defaultTextStickerFontFamily: UIFont?
     
     /// Whether text sticker allows line break.
     @objc public var textStickerCanLineBreak = true
@@ -220,8 +219,22 @@ public class ZLImageEditorConfiguration: NSObject {
     @objc var defaultArrowWidth: CGFloat = 5.0
     @objc var defaultArrowHeadSize: CGFloat = 15.0 // Length of the head lines
     @objc var defaultArrowHeadAngleConfig: CGFloat = .pi * 0.8
-    
-    @objc var defaultFontSize: CGFloat = 32
+
+    @objc var defaultTextStickerSize: CGFloat = 32
+
+    // MARK: Stroke defaults
+
+    /// The default pre-selected stroke color when creating a new shape or line.
+    /// Defaults to red.
+    @objc public var defaultStrokeColor: UIColor = .zl.rgba(249, 80, 81)
+
+    /// The default pre-selected stroke width preset (small / medium / large).
+    /// Defaults to `.medium`.
+    public var defaultStrokeWidth: ZLStrokeWidthOption = .medium
+
+    /// The default pre-selected stroke style.
+    /// Defaults to `.solid`.
+    @objc public var defaultStrokeStyle: ZLStrokeStyle = .solid
 }
 
 public extension ZLImageEditorConfiguration {

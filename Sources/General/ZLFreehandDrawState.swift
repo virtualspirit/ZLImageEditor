@@ -12,6 +12,7 @@ public class ZLFreehandDrawState: ZLBaseStickertState {
     let bezierPath: UIBezierPath
     let color: UIColor // Current color of the stroke
     let lineWidth: CGFloat // Current line width of the stroke
+    let strokeStyle: ZLStrokeStyle
 
     // The original ZLDrawPath.ratio and defaultLinePath might still be useful
     // if you ever need to reconstruct the original drawing conditions or scale.
@@ -22,6 +23,7 @@ public class ZLFreehandDrawState: ZLBaseStickertState {
         bezierPath: UIBezierPath, // This is the path with points relative to its padded bounding box
         color: UIColor,
         lineWidth: CGFloat,
+        strokeStyle: ZLStrokeStyle = .solid,
         originalRatio: CGFloat,
         originScale: CGFloat,
         originAngle: CGFloat,
@@ -33,6 +35,7 @@ public class ZLFreehandDrawState: ZLBaseStickertState {
         self.bezierPath = bezierPath
         self.color = color
         self.lineWidth = lineWidth
+        self.strokeStyle = strokeStyle
         self.originalRatio = originalRatio
 
         super.init(

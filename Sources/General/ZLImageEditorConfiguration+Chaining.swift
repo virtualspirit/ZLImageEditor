@@ -58,14 +58,14 @@ public extension ZLImageEditorConfiguration {
     }
     
     @discardableResult
-    func textStickerDefaultTextColor(_ color: UIColor) -> ZLImageEditorConfiguration {
-        textStickerDefaultTextColor = color
+    func defaultTextStickerColor(_ color: UIColor) -> ZLImageEditorConfiguration {
+        defaultTextStickerColor = color
         return self
     }
     
     @discardableResult
-    func textStickerDefaultFont(_ font: UIFont?) -> ZLImageEditorConfiguration {
-        textStickerDefaultFont = font
+    func defaultTextStickerFontFamily(_ font: UIFont?) -> ZLImageEditorConfiguration {
+        defaultTextStickerFontFamily = font
         return self
     }
     

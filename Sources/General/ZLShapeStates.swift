@@ -11,7 +11,7 @@ public class ZLLineState: ZLBaseStickertState {
     let endPoint: CGPoint   // Relative to bounds
     let color: UIColor
     let lineWidth: CGFloat
-    let strokeStyle: String // "solid", "dashed", "dotted"
+    let strokeStyle: ZLStrokeStyle
 
     public init(
         id: String = UUID().uuidString,
@@ -25,7 +25,7 @@ public class ZLLineState: ZLBaseStickertState {
         gesScale: CGFloat,
         gesRotation: CGFloat,
         totalTranslationPoint: CGPoint,
-        strokeStyle: String
+        strokeStyle: ZLStrokeStyle
     ) {
         self.startPoint = startPoint
         self.endPoint = endPoint
@@ -53,7 +53,7 @@ public class ZLArrowState: ZLBaseStickertState {
     let color: UIColor
     let lineWidth: CGFloat
     let headSize: CGFloat
-    let strokeStyle: String // "solid", "dashed", "dotted"
+    let strokeStyle: ZLStrokeStyle
 
     public init(
         id: String = UUID().uuidString,
@@ -68,7 +68,7 @@ public class ZLArrowState: ZLBaseStickertState {
         gesScale: CGFloat,
         gesRotation: CGFloat,
         totalTranslationPoint: CGPoint,
-        strokeStyle: String
+        strokeStyle: ZLStrokeStyle
     ) {
         self.startPoint = startPoint
         self.endPoint = endPoint
@@ -96,7 +96,7 @@ public class ZLShapeState: ZLBaseStickertState {
     var fillColor: UIColor?
     var lineWidth: CGFloat
     var cornerRadius: CGFloat // Only for rectangle
-    let strokeStyle: String // "solid", "dashed", "dotted"
+    let strokeStyle: ZLStrokeStyle
 
      public init(
         id: String = UUID().uuidString,
@@ -112,7 +112,7 @@ public class ZLShapeState: ZLBaseStickertState {
         gesScale: CGFloat,
         gesRotation: CGFloat,
         totalTranslationPoint: CGPoint,
-        strokeStyle: String
+        strokeStyle: ZLStrokeStyle
     ) {
         self.shapeType = shapeType
         self.bounds = bounds

@@ -11,22 +11,28 @@ protocol ShapeStyleSelectorViewDelegate: AnyObject {
     func didSelectStrokeColor(_ color: UIColor)
     func didSelectFillColor(_ color: UIColor)
     func didSelectStrokeWidth(_ width: CGFloat)
-    func didSelectStrokeStyle(_ style: String)
+    func didSelectStrokeStyle(_ style: ZLStrokeStyle)
 }
 
 class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
 
     weak var delegate: ShapeStyleSelectorViewDelegate?
 
-    private let strokeColors: [UIColor] = ZLImageEditorConfiguration.default().drawColors
-    // Tambahkan .clear di awal untuk opsi "No Fill"
-    private let fillColors: [UIColor] = [UIColor.clear] + ZLImageEditorConfiguration.default().drawColors
+    /// Suppresses delegate calls while `setInitialStyle` is syncing UI to the current sticker state.
+    private var isSettingInitialStyle = false
+
+    private var strokeColors: [UIColor] {
+        ZLImageEditorConfiguration.default().drawColors
+    }
+    private var fillColors: [UIColor] {
+        [UIColor.clear] + ZLImageEditorConfiguration.default().drawColors
+    }
     private let strokeWidths: [(label: String, value: CGFloat)] = [("Small", ZLStrokeWidthConstants.small), ("Medium", ZLStrokeWidthConstants.medium), ("Large", ZLStrokeWidthConstants.large)] // Sesuaikan nilai jika perlu
-    private let strokeStyles: [(label: String, value: String)] = [ // Gunakan enum jika lebih baik
-         ("Solid", "solid"),    // .butt biasanya menghasilkan garis solid standar
-         ("Dashed", "dashed"), // Untuk dashed/dotted, kita perlu menggambar path secara manual
-         ("Dotted", "dotted")   // atau menggunakan lineDashPattern pada CAShapeLayer
-     ]
+    private let strokeStyles: [(label: String, value: ZLStrokeStyle)] = [
+        ("Solid", .solid),
+        ("Dashed", .dashed),
+        ("Dotted", .dotted)
+    ]
     private let mainStackView = UIStackView()
 
     // Views untuk bagian Stroke Color
@@ -265,8 +271,10 @@ class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
         sender.isSelected = true
         sender.layer.borderColor = UIColor.zl.editDoneBtnBgColor.cgColor // Warna highlight
         selectedStrokeColorButton = sender
-        
-        delegate?.didSelectStrokeColor(sender.backgroundColor ?? .black)
+
+        if !isSettingInitialStyle {
+            delegate?.didSelectStrokeColor(sender.backgroundColor ?? .black)
+        }
     }
 
     @objc private func fillColorButtonTapped(_ sender: UIButton) {
@@ -286,8 +294,10 @@ class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
         sender.isSelected = true
         sender.layer.borderColor = UIColor.zl.editDoneBtnBgColor.cgColor // Warna highlight
         selectedFillColorButton = sender
-        
-        delegate?.didSelectFillColor(sender.backgroundColor ?? .clear) // .clear akan dihandle sebagai nil
+
+        if !isSettingInitialStyle {
+            delegate?.didSelectFillColor(sender.backgroundColor ?? .clear)
+        }
     }
     
     @objc private func strokeWidthButtonTapped(_ sender: UIButton) {
@@ -301,12 +311,16 @@ class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
         sender.isSelected = true
         sender.backgroundColor = UIColor.zl.editDoneBtnBgColor
         selectedStrokeWidthButton = sender
-        
-        let widthItem = strokeWidths[sender.tag]
-        delegate?.didSelectStrokeWidth(widthItem.value)
+
+        if !isSettingInitialStyle {
+            let widthItem = strokeWidths[sender.tag]
+            delegate?.didSelectStrokeWidth(widthItem.value)
+        }
     }
 
-    func setInitialStyle(strokeColor: UIColor?, fillColor: UIColor?, strokeWidth: CGFloat?, strokeStyle: String?) {
+    func setInitialStyle(strokeColor: UIColor?, fillColor: UIColor?, strokeWidth: CGFloat?, strokeStyle: ZLStrokeStyle?) {
+        isSettingInitialStyle = true
+        defer { isSettingInitialStyle = false }
         // Set Stroke Color
         if let strokeColor = strokeColor, let index = strokeColors.firstIndex(of: strokeColor) {
             strokeColorButtonTapped(strokeColorButtons[index])
@@ -333,10 +347,10 @@ class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
 
         // Set Stroke Style
         if let strokeStyle = strokeStyle, let index = strokeStyles.firstIndex(where: { $0.value == strokeStyle }) {
-             strokeStyleButtonTapped(strokeStyleButtons[index])
-         } else if let firstButton = strokeStyleButtons.first { // Default ke gaya pertama (misalnya "Solid")
-              strokeStyleButtonTapped(firstButton)
-         }
+            strokeStyleButtonTapped(strokeStyleButtons[index])
+        } else if let firstButton = strokeStyleButtons.first {
+            strokeStyleButtonTapped(firstButton)
+        }
     }
     
     private func setupStrokeStyleSection() {
@@ -373,9 +387,11 @@ class ShapeStyleSelectorView: UIView, UIGestureRecognizerDelegate {
         sender.isSelected = true
         sender.backgroundColor = UIColor.zl.editDoneBtnBgColor // Highlight warna
         selectedStrokeStyleButton = sender
-        
-        let styleItem = strokeStyles[sender.tag]
-        delegate?.didSelectStrokeStyle(styleItem.value)
+
+        if !isSettingInitialStyle {
+            let styleItem = strokeStyles[sender.tag]
+            delegate?.didSelectStrokeStyle(styleItem.value)
+        }
     }
     
     @objc private func handleInternalTap(_ gesture: UITapGestureRecognizer) {
