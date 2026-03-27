@@ -16,10 +16,15 @@ protocol ZLTextInputStyleViewDelegate: AnyObject {
 
 class ZLTextInputStyleView: UIView {
     weak var delegate: ZLTextInputStyleViewDelegate?
-    
-    private let textColors: [UIColor] = ZLImageEditorConfiguration.default().drawColors
 
-    private let fillColors: [UIColor] = [UIColor.clear] + ZLImageEditorConfiguration.default().drawColors
+    private var isSettingInitialStyle = false
+
+    private var textColors: [UIColor] {
+        ZLImageEditorConfiguration.default().drawColors
+    }
+    private var fillColors: [UIColor] {
+        [UIColor.clear] + ZLImageEditorConfiguration.default().drawColors
+    }
         
     private let mainStackView = UIStackView()
     
@@ -47,7 +52,7 @@ class ZLTextInputStyleView: UIView {
      private var italicStyleButton: UIButton!
     
     // State for new controls
-    private var currentFontSize: CGFloat = ZLImageEditorConfiguration.default().defaultFontSize { // Default initial font size
+    private var currentFontSize: CGFloat = ZLImageEditorConfiguration.default().defaultTextStickerSize { // Default initial font size
         didSet {
             fontSizeValueLabel?.text = String(format: "%.0f", currentFontSize)
         }
@@ -212,8 +217,10 @@ class ZLTextInputStyleView: UIView {
         sender.isSelected = true
         sender.layer.borderColor = UIColor.zl.editDoneBtnBgColor.cgColor // Warna highlight
         selectedTextColorButton = sender
-        
-        delegate?.didSelectTextColor(sender.backgroundColor ?? .black)
+
+        if !isSettingInitialStyle {
+            delegate?.didSelectTextColor(sender.backgroundColor ?? .black)
+        }
     }
 
     @objc private func fillColorButtonTapped(_ sender: UIButton) {
@@ -233,8 +240,10 @@ class ZLTextInputStyleView: UIView {
         sender.isSelected = true
         sender.layer.borderColor = UIColor.zl.editDoneBtnBgColor.cgColor // Warna highlight
         selectedFillColorButton = sender
-        
-        delegate?.didSelectFillColor(sender.backgroundColor ?? .clear) // .clear akan dihandle sebagai nil
+
+        if !isSettingInitialStyle {
+            delegate?.didSelectFillColor(sender.backgroundColor ?? .clear)
+        }
     }
     
     private func setupFontSizeSection() {
@@ -357,6 +366,8 @@ class ZLTextInputStyleView: UIView {
             isBold: Bool?,
             isItalic: Bool?
         ) {
+            isSettingInitialStyle = true
+            defer { isSettingInitialStyle = false }
             // Set Text Color
             if let tc = textColor, let index = textColors.firstIndex(of: tc) {
                 textColorButtonTapped(textColorButtons[index])
@@ -376,7 +387,7 @@ class ZLTextInputStyleView: UIView {
             if let fs = fontSize {
                 self.currentFontSize = fs
             } else {
-                self.currentFontSize = ZLImageEditorConfiguration.default().defaultFontSize // Fallback
+                self.currentFontSize = ZLImageEditorConfiguration.default().defaultTextStickerSize // Fallback
             }
             updateFontSizeSliderAndLabel() // Update slider and label from currentFontSize
 

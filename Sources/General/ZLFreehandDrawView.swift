@@ -20,7 +20,15 @@ class ZLFreehandDrawView: ZLBaseStickerView {
     public var lineWidth: CGFloat {
         didSet {
             if oldValue != lineWidth {
-                self.setNeedsDisplay() // Trigger redraw when line width changes
+                self.setNeedsDisplay()
+            }
+        }
+    }
+
+    public var strokeStyle: ZLStrokeStyle = .solid {
+        didSet {
+            if oldValue != strokeStyle {
+                self.setNeedsDisplay()
             }
         }
     }
@@ -33,8 +41,9 @@ class ZLFreehandDrawView: ZLBaseStickerView {
         return ZLFreehandDrawState(
             id: id,
             bezierPath: self.bezierPath,
-            color: self.color, // Use current view's color
-            lineWidth: self.lineWidth, // Use current view's lineWidth
+            color: self.color,
+            lineWidth: self.lineWidth,
+            strokeStyle: self.strokeStyle,
             originalRatio: self.originalRatio,
             originScale: originScale,
             originAngle: originAngle,
@@ -47,8 +56,8 @@ class ZLFreehandDrawView: ZLBaseStickerView {
 
     init(state: ZLFreehandDrawState) {
         self.bezierPath = state.bezierPath
-        self.color = state.color             // Initialize with state's color
-        self.lineWidth = state.lineWidth         // Initialize with state's lineWidth
+        self.color = state.color
+        self.lineWidth = state.lineWidth
         self.originalRatio = state.originalRatio
 
         super.init(
@@ -61,6 +70,7 @@ class ZLFreehandDrawView: ZLBaseStickerView {
             totalTranslationPoint: state.totalTranslationPoint,
             showBorder: true
         )
+        self.strokeStyle = state.strokeStyle
         self.clipsToBounds = false
         self.backgroundColor = .clear
         self.isOpaque = false
@@ -85,10 +95,22 @@ class ZLFreehandDrawView: ZLBaseStickerView {
         // However, it's usually simpler if self.lineWidth is the "model" thickness,
         // and the view's scaling handles the visual part.
         // Let's assume self.lineWidth is the model thickness for now.
-        let path = self.bezierPath.copy() as! UIBezierPath // Work with a copy
+        let path = self.bezierPath.copy() as! UIBezierPath
         path.lineWidth = self.lineWidth
-        path.lineCapStyle = .round // Ensure these are set if not on the stored path
         path.lineJoinStyle = .round
+
+        switch self.strokeStyle {
+        case .dashed:
+            let dashPattern: [CGFloat] = [lineWidth * 2, lineWidth * 1.5]
+            path.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+            path.lineCapStyle = .butt
+        case .dotted:
+            let dotPattern: [CGFloat] = [0, lineWidth * 1.5]
+            path.setLineDash(dotPattern, count: dotPattern.count, phase: 0)
+            path.lineCapStyle = .round
+        case .solid:
+            path.lineCapStyle = .round
+        }
 
         path.stroke()
 

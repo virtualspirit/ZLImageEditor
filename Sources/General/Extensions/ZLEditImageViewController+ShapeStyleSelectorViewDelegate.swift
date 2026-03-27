@@ -59,20 +59,19 @@ extension ZLEditImageViewController: ShapeStyleSelectorViewDelegate {
         editorManager.storeAction(.sticker(oldState: oldState, newState: newState))
     }
 
-    func didSelectStrokeStyle(_ style: String) {
+    func didSelectStrokeStyle(_ style: ZLStrokeStyle) {
         guard let currentSelectedSticker = currentSticker else { return }
 
         let oldState = currentSelectedSticker.state
         
         if let lineView = currentSelectedSticker as? ZLLineView {
-            lineView.strokeStyle = style // Ini akan memicu didSet di ZLLineView -> setNeedsDisplay()
+            lineView.strokeStyle = style
         } else if let arrowView = currentSelectedSticker as? ZLArrowView {
-            arrowView.strokeStyle = style // Anda perlu menambahkan properti serupa ke ZLArrowView
+            arrowView.strokeStyle = style
         } else if let shapeView = currentSelectedSticker as? ZLShapeView {
-            shapeView.strokeStyle = style // Dan ke ZLShapeView
+            shapeView.strokeStyle = style
         } else if let freehandView = currentSelectedSticker as? ZLFreehandDrawView {
-            // ZLFreehandDrawView mungkin perlu logika serupa jika mendukung style garis
-            // freehandView.strokeStyle = style
+            freehandView.strokeStyle = style
         }
         
         let newState = currentSelectedSticker.state

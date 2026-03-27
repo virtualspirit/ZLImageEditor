@@ -240,6 +240,11 @@ class ViewController: UIViewController {
             ])
             .fontChooserContainerView(FontChooserContainerView())
             .clipRatios(ZLImageClipRatio.all)
+        ZLImageEditorConfiguration.default().drawColors = [UIColor.red, UIColor.black, UIColor.blue, UIColor.white]
+        ZLImageEditorConfiguration.default().defaultStrokeColor = UIColor.red;
+        ZLImageEditorConfiguration.default().defaultStrokeWidth = .large
+        ZLImageEditorConfiguration.default().defaultStrokeStyle = .dotted
+        ZLImageEditorConfiguration.default().defaultTextStickerColor = UIColor.red
             // Custom filter
 //            .filters = [.normal]
     }

@@ -315,15 +315,15 @@ open class ZLEditImageViewController: UIViewController {
     
     var shapeOptions: [DrawShapeType]
     
-    var currentDrawColor = ZLImageEditorConfiguration.default().defaultDrawColor
-    
+    var currentDrawColor = ZLImageEditorConfiguration.default().defaultStrokeColor
+
     var currentDrawShape: DrawShapeType? = nil
-    
+
     var drawPaths: [ZLDrawPath]
-    
-    var drawLineWidth: CGFloat = ZLStrokeWidthConstants.medium
-    
-    var drawLineStyle: String = "solid"
+
+    var drawLineWidth: CGFloat = ZLImageEditorConfiguration.default().defaultStrokeWidth.value
+
+    var drawLineStyle: ZLStrokeStyle = ZLImageEditorConfiguration.default().defaultStrokeStyle
     
     var mosaicPaths: [ZLMosaicPath]
     
@@ -521,10 +521,6 @@ open class ZLEditImageViewController: UIViewController {
 
         
         editorManager.delegate = self
-        
-        if !drawColors.contains(currentDrawColor) {
-            currentDrawColor = drawColors.first!
-        }
         
         stickers = editModel?.stickers.compactMap {
             ZLBaseStickerView.initWithState($0)
@@ -1066,7 +1062,7 @@ open class ZLEditImageViewController: UIViewController {
     }
     
     func textStickerBtnClick() {
-        showInputTextVC(font: ZLImageEditorConfiguration.default().textStickerDefaultFont) { [weak self] text, textColor, font, image, fillColor, fontSize  in
+        showInputTextVC(font: ZLImageEditorConfiguration.default().defaultTextStickerFontFamily) { [weak self] text, textColor, font, image, fillColor, fontSize  in
             self?.addTextStickersView(text, textColor: textColor, font: font, image: image, fillColor: fillColor, fontSize: fontSize)
         }
         
@@ -1288,9 +1284,10 @@ open class ZLEditImageViewController: UIViewController {
                )
            } else if let freehandState = originalState as? ZLFreehandDrawState {
                duplicateState = ZLFreehandDrawState(
-                   bezierPath: freehandState.bezierPath.copy() as! UIBezierPath, // Important to copy the path
+                   bezierPath: freehandState.bezierPath.copy() as! UIBezierPath,
                    color: freehandState.color,
                    lineWidth: freehandState.lineWidth,
+                   strokeStyle: freehandState.strokeStyle,
                    originalRatio: freehandState.originalRatio,
                    originScale: freehandState.originScale,
                    originAngle: freehandState.originAngle,
@@ -1401,7 +1398,7 @@ open class ZLEditImageViewController: UIViewController {
                 shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: arrowSticker.strokeStyle)
             } else if let freehandSticker = selectedSticker as? ZLFreehandDrawView {
                  shapeStyleSelectorView.showFillColorOptions = false // UPDATE DI SINI
-                shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: nil)
+                shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: freehandSticker.strokeStyle)
             }
         }
     }
@@ -1435,7 +1432,7 @@ open class ZLEditImageViewController: UIViewController {
                 } else if let arrowSticker = currentSticker as? ZLArrowView {
                     shapeStyleSelectorView.setInitialStyle(strokeColor: arrowSticker.color, fillColor: nil, strokeWidth: arrowSticker.lineWidth, strokeStyle: arrowSticker.strokeStyle)
                 } else if let freehandSticker = currentSticker as? ZLFreehandDrawView {
-                     shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: nil)
+                     shapeStyleSelectorView.setInitialStyle(strokeColor: freehandSticker.color, fillColor: nil, strokeWidth: freehandSticker.lineWidth, strokeStyle: freehandSticker.strokeStyle)
                 }
                 shapeStyleSelectorView.showFillColorOptions = canStickerHaveFill // UPDATE DI SINI
             }
@@ -1541,11 +1538,11 @@ open class ZLEditImageViewController: UIViewController {
             let originAngle = -currentClipStatus.angle
 
             let freehandState = ZLFreehandDrawState(
-                // Pass the UIBezierPath directly
-                bezierPath: drawPathObject.path.copy() as! UIBezierPath, // Pass a copy
-                color: currentDrawColor,      // Initial color for the state
-                lineWidth: drawLineWidth,     // Initial line width for the state
-                originalRatio: drawPathObject.ratio, // Store original ZLDrawPath.ratio if needed
+                bezierPath: drawPathObject.path.copy() as! UIBezierPath,
+                color: currentDrawColor,
+                lineWidth: drawLineWidth,
+                strokeStyle: drawLineStyle,
+                originalRatio: drawPathObject.ratio,
                 originScale: originScale,
                 originAngle: originAngle,
                 originFrame: viewOriginFrame,
@@ -1611,7 +1608,7 @@ open class ZLEditImageViewController: UIViewController {
             // Setup preview layer
             previewLayer?.removeFromSuperlayer() // Clear old preview
             previewLayer = CAShapeLayer()
-            previewLayer?.lineWidth = ZLImageEditorConfiguration.default().defaultLineWidth // Or get from config/slider
+            previewLayer?.lineWidth = drawLineWidth
             previewLayer?.strokeColor = currentDrawColor.cgColor // Or get from config/color picker
             previewLayer?.fillColor = nil // Or get fill if shape tool
             previewLayer?.lineCap = .round

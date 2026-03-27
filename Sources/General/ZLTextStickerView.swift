@@ -43,7 +43,7 @@ class ZLTextStickerView: ZLBaseStickerView {
     
     public var fillColor: UIColor
     
-    public var fontSize: CGFloat = ZLImageEditorConfiguration().defaultFontSize
+    public var fontSize: CGFloat = ZLImageEditorConfiguration.default().defaultTextStickerSize
 
     public var font: UIFont?
         
