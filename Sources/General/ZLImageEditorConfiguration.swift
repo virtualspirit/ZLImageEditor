@@ -207,20 +207,20 @@ public class ZLImageEditorConfiguration: NSObject {
     
     
     // Add Default Configuration Options (Optional but Recommended)
-    @objc var defaultLineColor: UIColor = .zl.rgba(249, 80, 81)
-    @objc var defaultLineWidth: CGFloat = 5.0
+    @objc public var defaultLineColor: UIColor = .zl.rgba(249, 80, 81)
+    @objc public var defaultLineWidth: CGFloat = 5.0
 
-    @objc var defaultShapeStrokeColor: UIColor = .zl.rgba(249, 80, 81)
-    @objc var defaultShapeFillColor: UIColor? = nil // Default to no fill
-    @objc var defaultShapeLineWidth: CGFloat = 5.0
-    @objc var defaultShapeCornerRadius: CGFloat = 0.0 // For rectangles
+    @objc public var defaultShapeStrokeColor: UIColor = .zl.rgba(249, 80, 81)
+    @objc public var defaultShapeFillColor: UIColor? = nil // Default to no fill
+    @objc public var defaultShapeLineWidth: CGFloat = 5.0
+    @objc public var defaultShapeCornerRadius: CGFloat = 0.0 // For rectangles
 
-    @objc var defaultArrowColor: UIColor = .zl.rgba(249, 80, 81)
-    @objc var defaultArrowWidth: CGFloat = 5.0
-    @objc var defaultArrowHeadSize: CGFloat = 15.0 // Length of the head lines
-    @objc var defaultArrowHeadAngleConfig: CGFloat = .pi * 0.8
+    @objc public var defaultArrowColor: UIColor = .zl.rgba(249, 80, 81)
+    @objc public var defaultArrowWidth: CGFloat = 5.0
+    @objc public var defaultArrowHeadSize: CGFloat = 15.0 // Length of the head lines
+    @objc public var defaultArrowHeadAngleConfig: CGFloat = .pi * 0.8
 
-    @objc var defaultTextStickerSize: CGFloat = 32
+    @objc public var defaultTextStickerSize: CGFloat = 32
 
     // MARK: Stroke defaults
 
