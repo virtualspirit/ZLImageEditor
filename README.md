@@ -1,129 +1,87 @@
-[![Version](https://img.shields.io/github/v/tag/longitachi/ZLImageEditor.svg?color=blue&include_prereleases=&sort=semver)](https://cocoapods.org/pods/ZLImageEditor)
-[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-brightgreen.svg?style=flat)](https://github.com/Carthage/Carthage)
+[![Version](https://img.shields.io/github/v/tag/virtualspirit/ZLImageEditor.svg?color=blue&sort=semver)](https://github.com/virtualspirit/ZLImageEditor/tags)
 [![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-supported-E57141.svg)](https://swift.org/package-manager/)
-[![License](https://img.shields.io/badge/license-MIT-black)](https://raw.githubusercontent.com/longitachi/ZLImageEditor/master/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-black)](https://raw.githubusercontent.com/virtualspirit/ZLImageEditor/master/LICENSE)
 [![Platform](https://img.shields.io/badge/Platforms-iOS-blue?style=flat)](https://img.shields.io/badge/Platforms-iOS-blue?style=flat)
 ![Language](https://img.shields.io/badge/Language-%20Swift%20-E57141.svg)
 
-<img src="https://github.com/longitachi/ImageFolder/blob/master/ZLImageEditor/ZLImageEditor.png" width = "277" height = "600" div align=center/>
+A powerful iOS image editor framework. Supports drawing, cropping, mosaic, text stickers, image stickers, filters, and image adjustments.
 
----------------
+Forked from [longitachi/ZLImageEditor](https://github.com/longitachi/ZLImageEditor) with customizations for use via [rn-photo-editor](https://github.com/virtualspirit/rn-photo-editor).
 
-ZLImageEditor is a powerful image editor framework. Supports graffiti, cropping, mosaic, text stickers, picture stickers, filters, adjust(brightness, contrast, saturation).
+---
 
-ZLImageEditor is extracted from [ZLPhotoBrowser](https://github.com/longitachi/ZLPhotoBrowser).
+## Features
 
-### Directory
-* [Features](#Features)
-* [Requirements](#Requirements)
-* [Usage](#Usage)
-* [Change Log](#ChangeLog)
-* [Languages](#Languages)
-* [Installation(Support Cocoapods/Carthage/SPM)](#Installation)
-* [Support](#Support)
-* [Demo Effect](#DemoEffect)
+- [x] Draw (custom line color, width, style)
+- [x] Crop (free-style and custom ratios)
+- [x] Image sticker (custom sticker container view)
+- [x] Text sticker (custom text color and font)
+- [x] Mosaic
+- [x] Filter (custom filters)
+- [x] Adjust (Brightness, Contrast, Saturation)
+- [x] Undo / Redo for all operations
 
-### <a id="Features"></a>Features
-- [x] Draw (Support custom line color).
-- [x] Crop (Support custom crop ratios).
-- [x] Image sticker (Support custom image sticker container view).
-- [x] Text sticker  (Support custom text color).
-- [x] Mosaic.
-- [x] Filter (Support custom filters).
-- [x] Adjust (Brightness, Contrast, Saturation).
+---
 
-### <a id="Requirements"></a>Requirements
- | v >= 2.0.0 | iOS 10.0+ |
- | --- | --- |
- | v \< 2.0.0 | iOS 9.0+ |
- * Swift 5.x
- * Xcode 12.x
+## Requirements
 
-### <a id="Usage"></a>Usage
+| Version | iOS |
+|---------|-----|
+| v >= 2.0.0 | iOS 10.0+ |
+| v < 2.0.0 | iOS 9.0+ |
+
+- Swift 5.x
+- Xcode 12.x+
+
+---
+
+## Installation
+
+### CocoaPods
+
+```ruby
+pod 'ZLImageEditor', :git => 'https://github.com/virtualspirit/ZLImageEditor.git', :tag => '3.0.6'
+```
+
+Then run:
+
+```sh
+pod install
+```
+
+### Swift Package Manager
+
+1. File > Add Package Dependencies
+2. Enter: `https://github.com/virtualspirit/ZLImageEditor.git`
+3. Set version rule to **Up to Next Major** starting from `3.0.6`
+
+---
+
+## Usage
+
 ```swift
 ZLImageEditorConfiguration.default()
     .editImageTools([.draw, .clip, .imageSticker, .textSticker, .mosaic, .filter, .adjust])
     .adjustTools([.brightness, .contrast, .saturation])
 
-ZLEditImageViewController.showEditImageVC(parentVC: self, image: image, editModel: editModel) { [weak self] (resImage, editModel) in
-    // your code
+ZLEditImageViewController.showEditImageVC(
+    parentVC: self,
+    image: image,
+    editModel: editModel
+) { [weak self] resImage, editModel in
+    // resImage: edited UIImage
+    // editModel: ZLEditImageModel for re-editing
 }
 ```
 
-### <a id="ChangeLog"></a>Change Log
-> [More logs](https://github.com/longitachi/ZLImageEditor/blob/master/CHANGELOG.md)
-```
-● 2.0.3
-  Add:
-    Enhance the user experience of the image cropping interface and optimize the animation effects.
-  Fix:
-    Fix the bug that causes a crash when entering the cropping interface while the app only supports landscape mode.
-● 2.0.2
-  Add:
-    Adapt the text sticker input interface for iPad landscape mode.
-  Fix:
-    Fix the bug where cropping square images to circular shape fails.
-● 2.0.1
-  Add: 
-    Adapt to iOS 17, replace UIGraphicsBeginImageContextWithOptions with UIGraphicsImageRenderer.
-...
-```
+---
 
-### <a id="Languages"></a>Languages
-🇨🇳 Chinese (Simplified/Traditional), 🇺🇸 English, 🇯🇵 Japanese, 🇫🇷 French, 🇩🇪 German, 🇺🇦 Ukranian, 🇷🇺 Russian, 🇻🇳 Vietnamese, 🇰🇷 Korean, 🇲🇾 Malay, 🇮🇹 Italian, 🇮🇩 Indonesian, 🇪🇸 Spanish, 🇵🇹 Portuguese, 🇹🇷 Turkey, 🇸🇦 Arabic, 🇳🇱 Dutch.
+## Languages
 
-### <a id="Installation"></a>Installation
-There are four ways to use ZLImageEditor in your project:
+🇨🇳 Chinese (Simplified/Traditional), 🇺🇸 English, 🇯🇵 Japanese, 🇫🇷 French, 🇩🇪 German, 🇺🇦 Ukrainian, 🇷🇺 Russian, 🇻🇳 Vietnamese, 🇰🇷 Korean, 🇲🇾 Malay, 🇮🇹 Italian, 🇮🇩 Indonesian, 🇪🇸 Spanish, 🇵🇹 Portuguese, 🇹🇷 Turkish, 🇸🇦 Arabic, 🇳🇱 Dutch.
 
-  - using CocoaPods
-  - using Carthage
-  - using Swift Package Manager
-  - manual install (build frameworks or embed Xcode Project)
+---
 
-#### CocoaPods
-To integrate ZLImageEditor into your Xcode project using CocoaPods, specify it to a target in your Podfile:
+## License
 
-```
-source 'https://github.com/CocoaPods/Specs.git'
-platform :ios, '10.0'
-use_frameworks!
-
-target 'MyApp' do
-  # your other pod
-  # ...
-  pod 'ZLImageEditor'
-end
-```
-
-Then, run the following command:
-
-```
-$ pod install
-```
-
-> If you cannot find the latest version, you can execute `pod repo update` first
-
-#### Carthage
-To integrate ZLImageEditor into your Xcode project using Carthage, specify it in your Cartfile:
-
-```
-github "longitachi/ZLImageEditor"
-```
-
-Then, run the following command to build the ZLImageEditor framework:
-
-```
-$ carthage update ZLImageEditor
-```
-
-#### Swift Package Manager
-1. Select File > Swift Packages > Add Package Dependency. Enter https://github.com/longitachi/ZLImageEditor.git in the "Choose Package Repository" dialog.
-2. In the next page, specify the version resolving rule as "Up to Next Major" with "2.0.3" as its earliest version.
-3. After Xcode checking out the source and resolving the version, you can choose the "ZLImageEditor" library and add it to your app target.
-
-### <a id="Support"></a> Support
-* [**★ Star**](#) this repo.
-* Support with <img src="https://github.com/longitachi/ImageFolder/blob/master/ZLPhotoBrowser/ap.png" width = "100" height = "125" /> or <img src="https://github.com/longitachi/ImageFolder/blob/master/ZLPhotoBrowser/wp.png" width = "100" height = "125" /> or <img src="https://github.com/longitachi/ImageFolder/blob/master/ZLPhotoBrowser/pp.png" width = "150" height = "125" />
-
-### <a id="DemoEffect"></a> Demo Effect
-![image](https://github.com/longitachi/ImageFolder/blob/master/ZLImageEditor/editImage.gif)
+MIT
