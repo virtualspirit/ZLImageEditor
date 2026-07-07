@@ -40,7 +40,7 @@ Forked from [longitachi/ZLImageEditor](https://github.com/longitachi/ZLImageEdit
 ### CocoaPods
 
 ```ruby
-pod 'ZLImageEditor', :git => 'https://github.com/virtualspirit/ZLImageEditor.git', :tag => '3.0.6'
+pod 'ZLImageEditor', :git => 'https://github.com/virtualspirit/ZLImageEditor.git', :tag => '3.0.7'
 ```
 
 Then run:
@@ -53,7 +53,7 @@ pod install
 
 1. File > Add Package Dependencies
 2. Enter: `https://github.com/virtualspirit/ZLImageEditor.git`
-3. Set version rule to **Up to Next Major** starting from `3.0.6`
+3. Set version rule to **Up to Next Major** starting from `3.0.7`
 
 ---
 
