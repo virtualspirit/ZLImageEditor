@@ -172,7 +172,7 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
     func removeStickerViewWithID(_ id: String) {
         for view in stickersContainer.subviews {
             if let sticker = view as? ZLBaseStickerView, sticker.id == id {
-                sticker.removeFromSuperview()
+                sticker.remove()
                 // If this was the selected sticker, deselect it
                 if currentSticker === sticker {
                     currentSticker = nil
